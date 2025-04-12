@@ -1,10 +1,17 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_client::rpc_client::RpcClient;
 use solana_sdk::account_info::{AccountInfo, next_account_info};
 use solana_sdk::clock::Clock;
-use solana_sdk::entrypoint::{ProgramResult, entrypoint};
-use solana_sdk::msg;
+use solana_sdk::entrypoint::{ProgramResult};
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
+use solana_sdk::signer::Signer;
+use solana_sdk::system_instruction::create_account;
 use solana_sdk::sysvar::Sysvar;
+use solana_sdk::sysvar::clock::ID as SYSVAR_CLOCK_ID;
+use solana_sdk::transaction::Transaction;
+use solana_sdk::{msg, pubkey};
 
 ///How to get clock in a program
 // Getting a clock (ie, the current time) can be done in two ways:
@@ -49,5 +56,53 @@ pub fn process_instruction(
     let current_timestamp = clock.unix_timestamp;
     msg!("Current Timestamp: {}", current_timestamp);
 
+    Ok(())
+}
+
+///Now we pass the clock's sysvar public address via the client
+async fn client_call_process_instruction(
+    client: &RpcClient,
+    fee_payer: &Keypair,
+    hello_account: &Keypair,
+) -> anyhow::Result<()> {
+
+    let program_id = pubkey!("77ezihTV6mTh2Uf3ggwbYF2NyGJJ5HHah1GrdowWJVD3");
+    let account_space = 1; // because there exists just one boolean variable
+
+    let rent_required = client
+        .get_minimum_balance_for_rent_exemption(account_space)
+        .await?;
+
+    let create_hello_acc_ix = create_account(
+        &fee_payer.pubkey(),
+        &hello_account.pubkey(),
+        rent_required,
+        account_space as u64,
+        &program_id,
+    );
+
+    let ix_data = vec![];
+    let accounts = vec![
+        AccountMeta::new(fee_payer.pubkey(), true),
+        AccountMeta::new(hello_account.pubkey(), false),
+        AccountMeta::new(SYSVAR_CLOCK_ID, false),
+    ];
+
+    let pass_clock_ix = Instruction::new_with_bytes(program_id, &ix_data, accounts);
+
+    let mut transaction = Transaction::new_with_payer(
+        &[create_hello_acc_ix, pass_clock_ix],
+        Some(&fee_payer.pubkey()),
+    );
+
+    transaction.sign(
+        &[&fee_payer, &hello_account],
+        client.get_latest_blockhash().await?,
+    );
+
+    match client.send_and_confirm_transaction(&transaction).await {
+        Ok(signature) => println!("Transaction Signature: {}", signature),
+        Err(err) => eprintln!("Error sending transaction: {}", err),
+    }
     Ok(())
 }
