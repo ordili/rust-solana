@@ -2611,6 +2611,7 @@ name = "rust-solana"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "borsh 1.5.7",
  "solana-client",
  "solana-sdk",
  "spl-memo",
