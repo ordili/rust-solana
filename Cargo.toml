@@ -1,0 +1,12 @@
+[package]
+name = "rust-solana"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+solana-sdk = "2.2.2"
+tokio = "1.44.2"
+anyhow = "1.0.97"
+solana-client = "2.2.7"
+spl-memo = "6.0.0"
+
