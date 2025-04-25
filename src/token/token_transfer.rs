@@ -177,3 +177,12 @@ async fn token_transfer_example() -> Result<()> {
 
     Ok(())
 }
+
+mod tests {
+    use super::*;
+    #[test]
+    fn test_get_account() {
+        let account_info = tokio_test::block_on(token_transfer_example());
+        println!("{:#?}", account_info);
+    }
+}
