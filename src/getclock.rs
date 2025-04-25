@@ -1,7 +1,8 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::account_info::{AccountInfo, next_account_info};
 use solana_sdk::clock::Clock;
-use solana_sdk::entrypoint::{ProgramResult};
+use solana_sdk::entrypoint::ProgramResult;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -11,7 +12,6 @@ use solana_sdk::sysvar::Sysvar;
 use solana_sdk::sysvar::clock::ID as SYSVAR_CLOCK_ID;
 use solana_sdk::transaction::Transaction;
 use solana_sdk::{msg, pubkey};
-use solana_client::nonblocking::rpc_client::RpcClient;
 
 ///How to get clock in a program
 // Getting a clock (ie, the current time) can be done in two ways:
@@ -65,7 +65,6 @@ async fn client_call_process_instruction(
     fee_payer: &Keypair,
     hello_account: &Keypair,
 ) -> anyhow::Result<()> {
-
     let program_id = pubkey!("77ezihTV6mTh2Uf3ggwbYF2NyGJJ5HHah1GrdowWJVD3");
     let account_space = 1; // because there exists just one boolean variable
 
@@ -138,7 +137,6 @@ pub fn process_instruction_2(
 
     Ok(())
 }
-
 
 ///The client side instruction, now only needs to pass the state and payer accounts.
 async fn client_call_process_instruction_2(

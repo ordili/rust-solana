@@ -1,8 +1,10 @@
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::account::Account;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::{bs58, pubkey};
+use solana_sdk::pubkey::Pubkey;
 
 pub fn create_keypair() -> Keypair {
     let keypair = Keypair::new();
@@ -59,4 +61,10 @@ pub async fn airdrop(client: &RpcClient, keypair: &Keypair, lamport: u64) -> any
         }
     }
     Ok(())
+}
+
+pub async fn get_account(client: &RpcClient, keypair: &Pubkey) -> anyhow::Result<Account> {
+    let account_info = client.get_account(keypair).await?;
+    println!("{:#?}", account_info);
+    Ok(account_info)
 }
