@@ -10,4 +10,6 @@ anyhow = "1.0.97"
 solana-client = "2.2.7"
 spl-memo = "6.0.0"
 borsh = "1.5.7"
+spl-token-2022 = "8.0.1"
+tokio-test = "0.4.4"
 

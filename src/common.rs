@@ -1,10 +1,11 @@
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::account::Account;
 use solana_sdk::commitment_config::CommitmentConfig;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_sdk::sysvar;
 use solana_sdk::{bs58, pubkey};
-use solana_sdk::pubkey::Pubkey;
 
 pub fn create_keypair() -> Keypair {
     let keypair = Keypair::new();
@@ -46,10 +47,8 @@ pub fn validate_public_key() {
 }
 
 pub fn get_rpc_client() -> RpcClient {
-    let client = RpcClient::new_with_commitment(
-        String::from("http://127.0.0.1:8899"),
-        CommitmentConfig::confirmed(),
-    );
+    let host = "http://127.0.0.1:8899".to_string();
+    let client = RpcClient::new_with_commitment(host, CommitmentConfig::confirmed());
     client
 }
 
@@ -67,4 +66,16 @@ pub async fn get_account(client: &RpcClient, keypair: &Pubkey) -> anyhow::Result
     let account_info = client.get_account(keypair).await?;
     println!("{:#?}", account_info);
     Ok(account_info)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_get_account() {
+        let client = get_rpc_client();
+        let pub_key_id = sysvar::clock::ID;
+        let account_info = tokio_test::block_on(get_account(&client, &pub_key_id));
+        println!("{:#?}", account_info);
+    }
 }
