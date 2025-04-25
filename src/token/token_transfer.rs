@@ -1,3 +1,4 @@
+use crate::common;
 use anyhow::Result;
 use solana_sdk::{
     program_pack::Pack,
@@ -13,7 +14,6 @@ use spl_token_2022::{
     instruction::{initialize_mint, mint_to, transfer_checked},
     state::Mint,
 };
-use crate::common;
 
 async fn token_transfer_example() -> Result<()> {
     // Create connection to local validator
@@ -25,7 +25,7 @@ async fn token_transfer_example() -> Result<()> {
     // Generate a second keypair for the token recipient
     let recipient = Keypair::new();
 
-    common::airdrop(&client,&fee_payer, 1_000_000_000).await?;
+    common::airdrop(&client, &fee_payer, 1_000_000_000).await?;
 
     // Generate keypair to use as address of mint
     let mint = Keypair::new();
@@ -131,14 +131,14 @@ async fn token_transfer_example() -> Result<()> {
 
     // Create transfer_checked instruction to send tokens from source to destination
     let transfer_instruction = transfer_checked(
-        &token_2022_program_id(), // program id
-        &source_token_address,    // source
-        &mint.pubkey(),           // mint
-        &destination_token_address,// destination
-        &fee_payer.pubkey(),      // owner of source
-        &[&fee_payer.pubkey()],   // signers
-        transfer_amount,          // amount
-        2,                        // decimals
+        &token_2022_program_id(),   // program id
+        &source_token_address,      // source
+        &mint.pubkey(),             // mint
+        &destination_token_address, // destination
+        &fee_payer.pubkey(),        // owner of source
+        &[&fee_payer.pubkey()],     // signers
+        transfer_amount,            // amount
+        2,                          // decimals
     )?;
 
     // Create transaction for transferring tokens
@@ -152,9 +152,7 @@ async fn token_transfer_example() -> Result<()> {
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
-    println!(
-        "Successfully transferred 0.50 tokens from sender to recipient"
-    );
+    println!("Successfully transferred 0.50 tokens from sender to recipient");
     println!("Transaction Signature: {}", transaction_signature);
 
     // Get token account balances to verify the transfer
