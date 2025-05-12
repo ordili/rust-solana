@@ -1,8 +1,8 @@
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
-    commitment_config::CommitmentConfig, compute_budget, native_token::LAMPORTS_PER_SOL,
-    signature::Keypair, signer::Signer, system_instruction::transfer, transaction::Transaction,
+    compute_budget, native_token::LAMPORTS_PER_SOL, signature::Keypair, signer::Signer,
+    system_instruction::transfer, transaction::Transaction,
 };
 use spl_memo::build_memo;
 
@@ -13,32 +13,12 @@ pub async fn send_sol(
     lamport: u64,
 ) -> anyhow::Result<()> {
     let transfer_ix = transfer(&from_keypair.pubkey(), to_pub_key, lamport);
-
     let mut transaction = Transaction::new_with_payer(&[transfer_ix], Some(&from_keypair.pubkey()));
-
     transaction.sign(&[&from_keypair], client.get_latest_blockhash().await?);
-
-    match client.get_balance(to_pub_key).await {
-        Ok(num) => {
-            println!("Before transfer balance is {}", num)
-        }
-        Err(_) => {}
-    }
-
-    estimate_cu_used(&client, &transaction).await.unwrap();
-
     match client.send_and_confirm_transaction(&transaction).await {
         Ok(signature) => println!("Transaction Signature: {}", signature),
         Err(err) => eprintln!("Error sending transaction: {}", err),
     }
-
-    match client.get_balance(to_pub_key).await {
-        Ok(num) => {
-            println!("after transfer balance is {}", num)
-        }
-        Err(_) => {}
-    }
-
     Ok(())
 }
 
@@ -89,14 +69,30 @@ async fn add_priority_fees_to_transaction(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::common;
 
     #[actix_rt::test]
-    async fn test_create_account() {
+    async fn test_sol_transfer() -> anyhow::Result<()> {
         let client = crate::common::get_rpc_client();
-        // create_data_account()
-        let from = Keypair::new();
-        let to = Keypair::new().pubkey();
-        let lamports = LAMPORTS_PER_SOL * 10;
-        // send_sol(&client, &from, &to, lamports).await.unwrap();
+
+        let from = common::get_key_pair_from_local_json().unwrap();
+        let pub_key_str = "Cw1Q5ugnmkqhkeGu9y9QaGi1b837HiZtMrXFfNimxYXe";
+        let to_pub_key = Pubkey::from_str_const(pub_key_str);
+
+        let lamports = LAMPORTS_PER_SOL * 1;
+
+        let before_balance = client.get_balance(&to_pub_key).await.unwrap();
+
+        send_sol(&client, &from, &to_pub_key, lamports)
+            .await
+            .unwrap();
+
+        let after_balance = client.get_balance(&to_pub_key).await.unwrap();
+
+        assert_eq!(before_balance+lamports, after_balance);
+        println!("before_balance: {}", before_balance);
+        println!("after_balance: {}", after_balance);
+
+        Ok(())
     }
 }

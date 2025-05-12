@@ -1,4 +1,4 @@
-use std::{fs, path};
+use std::fs;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::account::Account;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -35,6 +35,7 @@ pub fn restore_keypair_from_secret_base58() -> Keypair {
     println!("recovered address: {}", keypair.pubkey());
     keypair
 }
+
 pub fn validate_public_key() {
     // Lies on the ed25519 curve and thus have an associated private key
     // Suitable for users
@@ -76,7 +77,6 @@ pub fn get_key_pair_from_local_json()-> anyhow::Result<Keypair> {
     let keypair_bytes: Vec<u8> = serde_json::from_str(&keypair_file)?;
 
     let default_keypair = Keypair::from_bytes(&keypair_bytes)?;
-    println!("loaded keypair address -> {:?}", default_keypair.pubkey()); // ! debug
     Ok(default_keypair)
 }
 #[cfg(test)]
