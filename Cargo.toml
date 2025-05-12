@@ -13,4 +13,5 @@ borsh = "1.5.7"
 spl-token-2022 = "8.0.1"
 tokio-test = "0.4.4"
 spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"] }
+actix-rt = "2.10.0"
 

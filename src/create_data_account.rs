@@ -15,16 +15,17 @@ use spl_token_2022::{id as token_2022_program_id, instruction::initialize_mint, 
 * Invoke the custom program, which now owns the account, to initialize the account data as defined
 * by the program's instruction
 */
-async fn create_data_account(client: &RpcClient) -> Result<()> {
+pub async fn create_data_account(client: &RpcClient) -> Result<()> {
     let recent_blockhash = client.get_latest_blockhash().await?;
 
     // Generate a new keypair for the fee payer
     let fee_payer = Keypair::new();
-
+    println!("fee_payer : {:?}", fee_payer.pubkey());
     airdrop(client, &fee_payer, 1_000_000_000).await?;
 
     // Generate keypair to use as address of mint
     let mint = Keypair::new();
+    println!("mint : {:?}", mint.pubkey());
 
     let space = Mint::LEN;
     let rent = client.get_minimum_balance_for_rent_exemption(space).await?;
@@ -76,5 +77,12 @@ mod tests {
         let client = common::get_rpc_client();
         let account_info = tokio_test::block_on(create_data_account(&client));
         println!("{:#?}", account_info);
+    }
+    
+    #[actix_rt::test]
+    async fn test_create_account() {
+        let client = crate::common::get_rpc_client();
+        // create_data_account()
+        crate::create_data_account::create_data_account(&client).await.unwrap();
     }
 }
