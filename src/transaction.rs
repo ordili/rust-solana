@@ -81,13 +81,13 @@ mod test {
 
         let lamports = LAMPORTS_PER_SOL * 1;
 
-        let before_balance = client.get_balance(&to_pub_key).await.unwrap();
+        let before_balance = client.get_balance(&to_pub_key).await?;
 
         send_sol(&client, &from, &to_pub_key, lamports)
             .await
             .unwrap();
 
-        let after_balance = client.get_balance(&to_pub_key).await.unwrap();
+        let after_balance = client.get_balance(&to_pub_key).await?;
 
         assert_eq!(before_balance+lamports, after_balance);
         println!("before_balance: {}", before_balance);
