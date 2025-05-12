@@ -78,11 +78,13 @@ mod tests {
         let account_info = tokio_test::block_on(create_data_account(&client));
         println!("{:#?}", account_info);
     }
-    
+
     #[actix_rt::test]
     async fn test_create_account() {
         let client = crate::common::get_rpc_client();
         // create_data_account()
-        crate::create_data_account::create_data_account(&client).await.unwrap();
+        crate::create_data_account::create_data_account(&client)
+            .await
+            .unwrap();
     }
 }
