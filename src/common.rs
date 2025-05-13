@@ -7,6 +7,7 @@ use solana_sdk::signer::Signer;
 use solana_sdk::sysvar;
 use solana_sdk::{bs58, pubkey};
 use std::fs;
+use std::sync::Arc;
 
 pub fn create_keypair() -> Keypair {
     let keypair = Keypair::new();
@@ -56,6 +57,16 @@ pub fn get_rpc_client() -> RpcClient {
 
 pub async fn airdrop(client: &RpcClient, keypair: &Keypair, lamport: u64) -> anyhow::Result<()> {
     let transaction_signature = client.request_airdrop(&keypair.pubkey(), lamport).await?;
+    loop {
+        if client.confirm_transaction(&transaction_signature).await? {
+            break;
+        }
+    }
+    Ok(())
+}
+
+pub async fn airdrop2(client: Arc<RpcClient>, pubkey: &Pubkey, lamport: u64) -> anyhow::Result<()> {
+    let transaction_signature = client.request_airdrop(pubkey, lamport).await?;
     loop {
         if client.confirm_transaction(&transaction_signature).await? {
             break;
