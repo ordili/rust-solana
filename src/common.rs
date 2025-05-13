@@ -70,9 +70,8 @@ pub async fn get_account(client: &RpcClient, keypair: &Pubkey) -> anyhow::Result
     Ok(account_info)
 }
 
-pub fn get_key_pair_from_local_json() -> anyhow::Result<Keypair> {
-    let default_keypair_path = "D:\\data\\id.json";
-    let keypair_file = fs::read_to_string(default_keypair_path)?;
+pub fn get_key_pair_from_local_json(keypair_path : &str) -> anyhow::Result<Keypair> {
+    let keypair_file = fs::read_to_string(keypair_path)?;
     let keypair_bytes: Vec<u8> = serde_json::from_str(&keypair_file)?;
 
     let default_keypair = Keypair::from_bytes(&keypair_bytes)?;
@@ -91,6 +90,7 @@ mod tests {
 
     #[test]
     fn test_get_key_pair_from_local_json() {
-        get_key_pair_from_local_json().unwrap();
+        let keypair_path = "/home/gidon/.config/solana/id.json".to_string();
+        get_key_pair_from_local_json(&keypair_path).unwrap();
     }
 }
