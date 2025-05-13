@@ -188,6 +188,7 @@ async fn token_transfer(
 
 mod tests {
     use solana_sdk::program_option::COption;
+    use spl_token_2022::state::{Account, AccountState};
 
     use super::*;
 
@@ -214,6 +215,7 @@ mod tests {
         
         assert_eq!(mint_account_data.is_initialized,true);
         assert_eq!(mint_account_data.decimals ,2);
+        assert_eq!(mint_account_data.supply,0);
         
         assert_eq!(mint_account_data.freeze_authority,COption::Some(authority.pubkey()));
         assert_eq!(mint_account_data.mint_authority,COption::Some(authority.pubkey()));
@@ -236,8 +238,25 @@ mod tests {
         create_mint_account(&client, &authority, &mint).await?;
         println!("create mint accout : {:?}", &mint.pubkey());
 
-        let ata = create_ata(&client, &authority, &mint.pubkey()).await?;
+        let wallet = Keypair::new();
+        common::airdrop(&client, &wallet, LAMPORTS_PER_SOL * 3).await?;
+        println!("wallet is : {:?}\n",wallet.pubkey());
+        let ata = create_ata(&client, &wallet, &mint.pubkey()).await?;
         println!("ata is {:?}", &ata);
+
+        let ata_data = client.get_account_data(&ata).await?;
+        let ata_account_data = Account::unpack_from_slice(&ata_data).unwrap();
+        println!("\nata account data is : {:?}", ata_account_data);
+        
+        assert_eq!(ata_account_data.amount,0);
+        assert_eq!(ata_account_data.mint, mint.pubkey());
+        assert_eq!(ata_account_data.owner, wallet.pubkey());
+        assert_eq!(ata_account_data.is_native, COption::None);
+        assert_eq!(ata_account_data.state, AccountState::Initialized);
+
+        let ata_account = client.get_account(&ata).await?;
+        println!("\nata account is : {:?}", ata_account);
+        assert_eq!(token_2022_program_id(), ata_account.owner);
         Ok(())
     }
 
