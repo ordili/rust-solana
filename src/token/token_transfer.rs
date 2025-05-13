@@ -61,7 +61,7 @@ async fn create_mint_account(
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
-    println!("Setup Transaction Signature: {}", transaction_signature);
+    println!("Mint account transaction signature: {}", transaction_signature);
     println!("----------------------end create_mint_account------------------------------\n");
     Ok(())
 }
@@ -187,6 +187,8 @@ async fn token_transfer(
 }
 
 mod tests {
+    use solana_sdk::program_option::COption;
+
     use super::*;
 
     #[actix_rt::test]
@@ -196,7 +198,24 @@ mod tests {
         let mint = Keypair::new();
         common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
         create_mint_account(&client, &authority, &mint).await?;
-        println!("create mint accout : {:?}", &mint.pubkey());
+        println!("create mint account : {:?}", &mint.pubkey());
+
+        let mint_data = client.get_account_data(&mint.pubkey()).await?;
+        let mint_account_data = Mint::unpack_from_slice(&mint_data).unwrap();
+        
+        assert_eq!(mint_account_data.is_initialized,true);
+        assert_eq!(mint_account_data.decimals ,2);
+        
+        assert_eq!(mint_account_data.freeze_authority,COption::Some(authority.pubkey()));
+        assert_eq!(mint_account_data.mint_authority,COption::Some(authority.pubkey()));
+
+        let mint_account = client.get_account(&mint.pubkey()).await?;
+        assert_eq!(mint_account.executable, false );
+        assert_eq!(mint_account.owner, token_2022_program_id());
+
+        println!("mint account : {:?}", mint_account);
+        println!("authority account : {:?}",&authority.pubkey());
+
         Ok(())
     }
 
@@ -233,39 +252,46 @@ mod tests {
 
         Ok(())
     }
-
+    
     #[actix_rt::test]
-    async fn test_token_transfer() -> Result<()> {
+    async fn test_token_transfer_2() -> Result<()> {
         let client = common::get_rpc_client();
+
         let authority = Keypair::new();
         let mint = Keypair::new();
         common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
 
         create_mint_account(&client, &authority, &mint).await?;
 
-        println!("mint accout is : {:?}", &mint.pubkey());
+        println!("authority account is : {:?}", &authority.pubkey());
+        println!("mint account is : {:?}", &mint.pubkey());
 
-        let from_ata = create_ata(&client, &authority, &mint.pubkey()).await?;
-        println!("from_ata is {:?}", &from_ata);
+        let source_wallet = Keypair::new();
+        let dest_wallet = Keypair::new();
+        common::airdrop(&client, &source_wallet, LAMPORTS_PER_SOL * 2).await?;
+        common::airdrop(&client, &dest_wallet, LAMPORTS_PER_SOL * 3).await?;
+
+        println!("source_wallet account is : {:?}", &source_wallet.pubkey());
+        println!("dest_wallet account is : {:?}", &dest_wallet.pubkey());
+
+        let source_ata = create_ata(&client, &source_wallet, &mint.pubkey()).await?;
+        let dest_ata = create_ata(&client, &dest_wallet, &mint.pubkey()).await?;
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint.pubkey(), &authority, &from_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &authority, &source_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &authority, &dest_ata, mint_amount).await?;
 
-        let to_wallet = Keypair::new();
-        common::airdrop(&client, &to_wallet, LAMPORTS_PER_SOL * 2).await?;
-        println!("to wallet is : {:?}", &to_wallet.pubkey());
-        let to_ata = create_ata(&client, &to_wallet, &mint.pubkey()).await?;
-        let to_mint_amount = 3000;
-        mint_to_ata(&client, &mint.pubkey(), &authority, &to_ata, to_mint_amount).await?;
-        println!("to_ata is {:?}", &to_ata);
+        
+        println!("source_ata account is : {:?}", &source_ata);
+        println!("dest_ata account is : {:?}", &dest_ata);
 
         let transfer_amount = 200;
         token_transfer(
             &client,
-            &authority,
+            &source_wallet,
             &mint.pubkey(),
-            &from_ata,
-            &to_ata,
+            &source_ata,
+            &dest_ata,
             transfer_amount,
         )
         .await?;
@@ -273,3 +299,4 @@ mod tests {
         Ok(())
     }
 }
+
