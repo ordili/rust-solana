@@ -197,7 +197,16 @@ mod tests {
         let authority = Keypair::new();
         let mint = Keypair::new();
         common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
+
+        let before_balance = client.get_balance(&authority.pubkey()).await?;
         create_mint_account(&client, &authority, &mint).await?;
+        let after_balance = client.get_balance(&authority.pubkey()).await?;
+        
+        println!("beore balance is {}, after balance is {}, the differ is {}",before_balance,after_balance, (before_balance-after_balance));
+        
+        let mint_balance = client.get_balance(&mint.pubkey()).await?;
+        println!("mint_balance balance is {}",mint_balance);
+        
         println!("create mint account : {:?}", &mint.pubkey());
 
         let mint_data = client.get_account_data(&mint.pubkey()).await?;
@@ -213,7 +222,6 @@ mod tests {
         assert_eq!(mint_account.executable, false );
         assert_eq!(mint_account.owner, token_2022_program_id());
 
-        println!("mint account : {:?}", mint_account);
         println!("authority account : {:?}",&authority.pubkey());
 
         Ok(())
