@@ -70,7 +70,7 @@ pub async fn get_account(client: &RpcClient, keypair: &Pubkey) -> anyhow::Result
     Ok(account_info)
 }
 
-pub fn get_key_pair_from_local_json(keypair_path : &str) -> anyhow::Result<Keypair> {
+pub fn get_key_pair_from_local_json(keypair_path: &str) -> anyhow::Result<Keypair> {
     let keypair_file = fs::read_to_string(keypair_path)?;
     let keypair_bytes: Vec<u8> = serde_json::from_str(&keypair_file)?;
 
