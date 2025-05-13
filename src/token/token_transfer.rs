@@ -80,7 +80,7 @@ async fn mint_to_ata(
     let mint_to_instruction = mint_to(
         &token_2022_program_id(),
         mint_pubkey,            // mint
-        ata,                    // destination
+        ata,     // destination
         &authority.pubkey(),    // authority
         &[&authority.pubkey()], // signer
         amount,                 // amount
