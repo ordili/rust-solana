@@ -20,7 +20,7 @@ use spl_token_2022::{
 
 async fn create_mint_account(
     client: &RpcClient,
-    fee_payer: &Keypair,
+    authority: &Keypair,
     mint: &Keypair,
 ) -> Result<()> {
     println!("----------------------begin create_mint_account------------------------------");
@@ -32,7 +32,7 @@ async fn create_mint_account(
 
     // Instruction to create new account for mint (token 2022 program)
     let create_account_instruction = create_account(
-        &fee_payer.pubkey(),      // payer
+        &authority.pubkey(),      // payer
         &mint.pubkey(),           // new account (mint)
         mint_rent,                // lamports
         mint_space as u64,        // space
@@ -43,8 +43,8 @@ async fn create_mint_account(
     let initialize_mint_instruction = initialize_mint(
         &token_2022_program_id(),
         &mint.pubkey(),            // mint
-        &fee_payer.pubkey(),       // mint authority
-        Some(&fee_payer.pubkey()), // freeze authority
+        &authority.pubkey(),       // mint authority
+        Some(&authority.pubkey()), // freeze authority
         2,                         // decimals
     )?;
 
@@ -53,8 +53,8 @@ async fn create_mint_account(
     // Create transaction and add instructions
     let transaction = Transaction::new_signed_with_payer(
         &[create_account_instruction, initialize_mint_instruction],
-        Some(&fee_payer.pubkey()),
-        &[&fee_payer, &mint],
+        Some(&authority.pubkey()),
+        &[&authority, &mint],
         recent_blockhash,
     );
 
@@ -70,7 +70,7 @@ async fn mint_to_ata(
     client: &RpcClient,
     mint_pubkey: &Pubkey,
     authority: &Keypair,
-    ata: &Pubkey,
+    account_pubkey: &Pubkey,
     amount: u64,
 ) -> Result<()> {
     println!("----------------------begin mint_to_ata------------------------------");
@@ -80,7 +80,7 @@ async fn mint_to_ata(
     let mint_to_instruction = mint_to(
         &token_2022_program_id(),
         mint_pubkey,            // mint
-        ata,     // destination
+        account_pubkey,     // destination
         &authority.pubkey(),    // authority
         &[&authority.pubkey()], // signer
         amount,                 // amount
@@ -145,10 +145,10 @@ async fn create_ata(client: &RpcClient, wallet: &Keypair, mint_pubkey: &Pubkey) 
 
 async fn token_transfer(
     client: &RpcClient,
-    fee_payer: &Keypair,
+    authority: &Keypair,
     mint_pubkey: &Pubkey,
-    from_ata: &Pubkey,
-    ata_to: &Pubkey,
+    source_pubkey: &Pubkey,
+    destination_pubkey: &Pubkey,
     amount: u64,
 ) -> Result<()> {
     println!("----------------------begin token_transfer------------------------------\n");
@@ -158,11 +158,11 @@ async fn token_transfer(
     // Create transfer_checked instruction to send tokens from source to destination
     let transfer_instruction = transfer_checked(
         &token_2022_program_id(), // program id
-        from_ata,                 // source
+        source_pubkey,                 // source
         mint_pubkey,              // mint
-        ata_to,                   // destination
-        &fee_payer.pubkey(),      // owner of source
-        &[&fee_payer.pubkey()],   // signers
+        destination_pubkey,                   // destination
+        &authority.pubkey(),      // owner of source
+        &[&authority.pubkey()],   // signers
         amount,                   // amount
         2,                        // decimals
     )?;
@@ -170,8 +170,8 @@ async fn token_transfer(
     // Create transaction for transferring tokens
     let transaction = Transaction::new_signed_with_payer(
         &[transfer_instruction],
-        Some(&fee_payer.pubkey()),
-        &[&fee_payer],
+        Some(&authority.pubkey()),
+        &[&authority],
         recent_blockhash,
     );
 
@@ -192,10 +192,10 @@ mod tests {
     #[actix_rt::test]
     async fn test_create_mint_account() -> Result<()> {
         let client = common::get_rpc_client();
-        let fee_payer = Keypair::new();
+        let authority = Keypair::new();
         let mint = Keypair::new();
-        common::airdrop(&client, &fee_payer, LAMPORTS_PER_SOL * 10).await?;
-        create_mint_account(&client, &fee_payer, &mint).await?;
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
+        create_mint_account(&client, &authority, &mint).await?;
         println!("create mint accout : {:?}", &mint.pubkey());
         Ok(())
     }
@@ -203,13 +203,13 @@ mod tests {
     #[actix_rt::test]
     async fn test_create_ata() -> Result<()> {
         let client = common::get_rpc_client();
-        let fee_payer = Keypair::new();
+        let authority = Keypair::new();
         let mint = Keypair::new();
-        common::airdrop(&client, &fee_payer, LAMPORTS_PER_SOL * 10).await?;
-        create_mint_account(&client, &fee_payer, &mint).await?;
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
+        create_mint_account(&client, &authority, &mint).await?;
         println!("create mint accout : {:?}", &mint.pubkey());
 
-        let ata = create_ata(&client, &fee_payer, &mint.pubkey()).await?;
+        let ata = create_ata(&client, &authority, &mint.pubkey()).await?;
         println!("ata is {:?}", &ata);
         Ok(())
     }
@@ -217,19 +217,19 @@ mod tests {
     #[actix_rt::test]
     async fn test_mint_to_ata() -> Result<()> {
         let client = common::get_rpc_client();
-        let fee_payer = Keypair::new();
+        let authority = Keypair::new();
         let mint = Keypair::new();
-        common::airdrop(&client, &fee_payer, LAMPORTS_PER_SOL * 10).await?;
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
 
-        create_mint_account(&client, &fee_payer, &mint).await?;
+        create_mint_account(&client, &authority, &mint).await?;
 
         println!("mint accout is : {:?}", &mint.pubkey());
 
-        let from_ata = create_ata(&client, &fee_payer, &mint.pubkey()).await?;
+        let from_ata = create_ata(&client, &authority, &mint.pubkey()).await?;
         println!("from_ata is {:?}", &from_ata);
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint.pubkey(), &fee_payer, &from_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &authority, &from_ata, mint_amount).await?;
 
         Ok(())
     }
@@ -237,32 +237,32 @@ mod tests {
     #[actix_rt::test]
     async fn test_token_transfer() -> Result<()> {
         let client = common::get_rpc_client();
-        let fee_payer = Keypair::new();
+        let authority = Keypair::new();
         let mint = Keypair::new();
-        common::airdrop(&client, &fee_payer, LAMPORTS_PER_SOL * 10).await?;
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
 
-        create_mint_account(&client, &fee_payer, &mint).await?;
+        create_mint_account(&client, &authority, &mint).await?;
 
         println!("mint accout is : {:?}", &mint.pubkey());
 
-        let from_ata = create_ata(&client, &fee_payer, &mint.pubkey()).await?;
+        let from_ata = create_ata(&client, &authority, &mint.pubkey()).await?;
         println!("from_ata is {:?}", &from_ata);
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint.pubkey(), &fee_payer, &from_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &authority, &from_ata, mint_amount).await?;
 
         let to_wallet = Keypair::new();
         common::airdrop(&client, &to_wallet, LAMPORTS_PER_SOL * 2).await?;
         println!("to wallet is : {:?}", &to_wallet.pubkey());
         let to_ata = create_ata(&client, &to_wallet, &mint.pubkey()).await?;
         let to_mint_amount = 3000;
-        mint_to_ata(&client, &mint.pubkey(), &fee_payer, &to_ata, to_mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &authority, &to_ata, to_mint_amount).await?;
         println!("to_ata is {:?}", &to_ata);
 
         let transfer_amount = 200;
         token_transfer(
             &client,
-            &fee_payer,
+            &authority,
             &mint.pubkey(),
             &from_ata,
             &to_ata,
