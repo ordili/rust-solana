@@ -68,7 +68,7 @@ async fn create_mint_account(
 
 async fn mint_to_ata(
     client: &RpcClient,
-    mint: &Keypair,
+    mint_pubkey: &Pubkey,
     authority: &Keypair,
     ata: &Pubkey,
     amount: u64,
@@ -79,7 +79,7 @@ async fn mint_to_ata(
     // Create mint_to instruction to mint tokens to the associated token account
     let mint_to_instruction = mint_to(
         &token_2022_program_id(),
-        &mint.pubkey(),         // mint
+        mint_pubkey,         // mint
         ata,                    // destination
         &authority.pubkey(),    // authority
         &[&authority.pubkey()], // signer
@@ -105,18 +105,18 @@ async fn mint_to_ata(
     Ok(())
 }
 
-async fn create_associated_token_address(
+async fn create_ata(
     client: &RpcClient,
     wallet: &Keypair,
-    mint: &Keypair,
+    mint_pubkey: &Pubkey
 ) -> Result<Pubkey> {
     println!(
-        "----------------------begin create_associated_token_address------------------------------"
+        "----------------------begin create_ata------------------------------"
     );
     // Calculate the associated token account address for fee_payer
     let token_address: Pubkey = get_associated_token_address_with_program_id(
         &wallet.pubkey(),         // owner
-        &mint.pubkey(),           // mint
+        mint_pubkey,           // mint
         &token_2022_program_id(), // program_id
     );
 
@@ -124,7 +124,7 @@ async fn create_associated_token_address(
     let create_ata_instruction = create_associated_token_account(
         &wallet.pubkey(),         // funding address
         &wallet.pubkey(),         // wallet address
-        &mint.pubkey(),           // mint address
+        mint_pubkey,           // mint address
         &token_2022_program_id(), // program id
     );
 
@@ -142,24 +142,24 @@ async fn create_associated_token_address(
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
     println!(
-        "create_associated_token_address transaction signature: {}",
+        "create_ata transaction signature: {}",
         transaction_signature
     );
     println!(
-        "----------------------end create_associated_token_address------------------------------\n"
+        "----------------------end create_ata------------------------------\n"
     );
     Ok(token_address)
 }
 
-async fn token_transfer_example(
+async fn token_transfer(
     client: &RpcClient,
     fee_payer: &Keypair,
-    mint: &Keypair,
+    mint_pubkey: &Pubkey,
     from_ata: &Pubkey,
     ata_to: &Pubkey,
     amount: u64,
 ) -> Result<()> {
-    println!("----------------------begin token_transfer_example------------------------------\n");
+    println!("----------------------begin token_transfer------------------------------\n");
     // Get the latest blockhash for the transfer transaction
     let recent_blockhash = client.get_latest_blockhash().await?;
 
@@ -167,7 +167,7 @@ async fn token_transfer_example(
     let transfer_instruction = transfer_checked(
         &token_2022_program_id(), // program id
         from_ata,                 // source
-        &mint.pubkey(),           // mint
+        mint_pubkey,           // mint
         ata_to,                   // destination
         &fee_payer.pubkey(),      // owner of source
         &[&fee_payer.pubkey()],   // signers
@@ -192,7 +192,7 @@ async fn token_transfer_example(
         "token_transfer_example transaction signature: {:?}",
         transaction_signature
     );
-    println!("----------------------end token_transfer_example------------------------------\n");
+    println!("----------------------end token_transfer------------------------------\n");
     Ok(())
 }
 
@@ -211,7 +211,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_create_associated_token_address() -> Result<()> {
+    async fn test_create_ata() -> Result<()> {
         let client = common::get_rpc_client();
         let fee_payer = Keypair::new();
         let mint = Keypair::new();
@@ -219,11 +219,11 @@ mod tests {
         create_mint_account(&client, &fee_payer, &mint).await?;
         println!("create mint accout : {:?}", &mint.pubkey());
 
-        let associated_token_address =
-            create_associated_token_address(&client, &fee_payer, &mint).await?;
+        let ata =
+          create_ata(&client, &fee_payer, &mint.pubkey()).await?;
         println!(
-            "associated_token_address is {:?}",
-            &associated_token_address
+            "ata is {:?}",
+            &ata
         );
         Ok(())
     }
@@ -239,17 +239,17 @@ mod tests {
 
         println!("mint accout is : {:?}", &mint.pubkey());
 
-        let from_ata = create_associated_token_address(&client, &fee_payer, &mint).await?;
+        let from_ata = create_ata(&client, &fee_payer, &mint.pubkey()).await?;
         println!("from_ata is {:?}", &from_ata);
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint, &fee_payer, &from_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &fee_payer, &from_ata, mint_amount).await?;
 
         Ok(())
     }
 
     #[actix_rt::test]
-    async fn test_token_transfer_example() -> Result<()> {
+    async fn test_token_transfer() -> Result<()> {
         let client = common::get_rpc_client();
         let fee_payer = Keypair::new();
         let mint = Keypair::new();
@@ -259,25 +259,25 @@ mod tests {
 
         println!("mint accout is : {:?}", &mint.pubkey());
 
-        let from_ata = create_associated_token_address(&client, &fee_payer, &mint).await?;
+        let from_ata = create_ata(&client, &fee_payer, &mint.pubkey()).await?;
         println!("from_ata is {:?}", &from_ata);
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint, &fee_payer, &from_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &fee_payer, &from_ata, mint_amount).await?;
 
         let to_wallet = Keypair::new();
         common::airdrop(&client, &to_wallet, LAMPORTS_PER_SOL * 2).await?;
         println!("to wallet is : {:?}", &to_wallet.pubkey());
-        let to_ata = create_associated_token_address(&client, &to_wallet, &mint).await?;
+        let to_ata = create_ata(&client, &to_wallet, &mint.pubkey()).await?;
         let to_mint_amount= 3000;
-        mint_to_ata(&client, &mint, &fee_payer, &to_ata, to_mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &fee_payer, &to_ata, to_mint_amount).await?;
         println!("to_ata is {:?}", &to_ata);
 
         let transfer_amount = 200;
-        token_transfer_example(
+        token_transfer(
             &client,
             &fee_payer,
-            &mint,
+            &mint.pubkey(),
             &from_ata,
             &to_ata,
             transfer_amount,
