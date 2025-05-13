@@ -187,6 +187,8 @@ async fn token_transfer(
 }
 
 mod tests {
+    use std::sync::Arc;
+
     use solana_sdk::program_option::COption;
     use spl_token_2022::state::{Account, AccountState};
 
@@ -268,15 +270,20 @@ mod tests {
         common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
 
         create_mint_account(&client, &authority, &mint).await?;
-
         println!("mint accout is : {:?}", &mint.pubkey());
 
-        let from_ata = create_ata(&client, &authority, &mint.pubkey()).await?;
-        println!("from_ata is {:?}", &from_ata);
+        let wallet = Keypair::new();
+        common::airdrop(&client, &wallet, LAMPORTS_PER_SOL * 2).await?;
+        let ata = create_ata(&client, &wallet, &mint.pubkey()).await?;
+        println!("ata is {:?}", &ata);
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint.pubkey(), &authority, &from_ata, mint_amount).await?;
+        mint_to_ata(&client, &mint.pubkey(), &authority, &ata, mint_amount).await?;
 
+        let ata_data = client.get_account_data(&ata).await?;
+        let ata_data_account = Account::unpack_from_slice(&ata_data).unwrap();
+        assert_eq!(ata_data_account.amount,1000);
+        println!("\n ata_data_account is : {:?}",ata_data_account);
         Ok(())
     }
     
