@@ -1,0 +1,29 @@
+thread 'rustc' panicked at /rustc/00095b3da4f23d9b3e7a809ac6a4e2b2530df84c/compiler/rustc_query_system/src/dep_graph/serialized.rs:260:21:
+Error: A dep graph node (needs_drop_raw) does not have an unique index. Running a clean build on a nightly compiler with `-Z incremental-verify-ich` can help narrow down the issue for reporting. A clean build may also work around the issue.
+
+                     DepNode: DepKind { variant: 179 }(794f42e5128d77cc-7b4d3947170e003c)
+stack backtrace:
+   0:     0x7f4d26cb6065 - std::backtrace::Backtrace::create::h5748fa7f428e2b95
+   1:     0x7f4d2505bcc5 - std::backtrace::Backtrace::force_capture::hb034ef05b38d081e
+   2:     0x7f4d240eb09f - std[f818c7cd7e376af1]::panicking::update_hook::<alloc[e72992aa51c730d6]::boxed::Box<rustc_driver_impl[1dca167b5f9460ec]::install_ice_hook::{closure#1}>>::{closure#0}
+   3:     0x7f4d25075733 - std::panicking::rust_panic_with_hook::hd12698d7c13bae7a
+   4:     0x7f4d2507542a - std::panicking::begin_panic_handler::{{closure}}::hf78af1004bc5d732
+   5:     0x7f4d25071a49 - std::sys::backtrace::__rust_end_short_backtrace::hb7b32aa402553f8e
+   6:     0x7f4d250750ed - __rustc[33a63cc8ebf7130a]::rust_begin_unwind
+   7:     0x7f4d21a9f9c0 - core::panicking::panic_fmt::ha02e8e653c86a3ae
+   8:     0x7f4d26642687 - rustc_incremental[bd8138ba23ffea23]::persist::load::setup_dep_graph
+   9:     0x7f4d2694610d - rustc_interface[99ac44fc113efbb7]::interface::run_compiler::<(), rustc_driver_impl[1dca167b5f9460ec]::run_compiler::{closure#0}>::{closure#1}
+  10:     0x7f4d241019ab - <rayon_core[23658dceb613f00a]::job::StackJob<rayon_core[23658dceb613f00a]::latch::LatchRef<rayon_core[23658dceb613f00a]::latch::LockLatch>, <rayon_core[23658dceb613f00a]::registry::Registry>::in_worker_cold<<rayon_core[23658dceb613f00a]::thread_pool::ThreadPool>::install<rustc_interface[99ac44fc113efbb7]::util::run_in_thread_pool_with_globals<rustc_interface[99ac44fc113efbb7]::interface::run_compiler<(), rustc_driver_impl[1dca167b5f9460ec]::run_compiler::{closure#0}>::{closure#1}, ()>::{closure#3}::{closure#0}::{closure#1}::{closure#0}, ()>::{closure#0}, ()>::{closure#0}::{closure#0}, ()> as rayon_core[23658dceb613f00a]::job::Job>::execute
+  11:     0x7f4d23bc740e - <rayon_core[23658dceb613f00a]::registry::WorkerThread>::wait_until_cold
+  12:     0x7f4d23bc4d4b - <rayon_core[23658dceb613f00a]::registry::ThreadBuilder>::run
+  13:     0x7f4d240f253a - <<crossbeam_utils[7365a4ac9836f234]::thread::ScopedThreadBuilder>::spawn<<rayon_core[23658dceb613f00a]::ThreadPoolBuilder>::build_scoped<rustc_interface[99ac44fc113efbb7]::util::run_in_thread_pool_with_globals<rustc_interface[99ac44fc113efbb7]::interface::run_compiler<(), rustc_driver_impl[1dca167b5f9460ec]::run_compiler::{closure#0}>::{closure#1}, ()>::{closure#3}::{closure#0}::{closure#0}, rustc_interface[99ac44fc113efbb7]::util::run_in_thread_pool_with_globals<rustc_interface[99ac44fc113efbb7]::interface::run_compiler<(), rustc_driver_impl[1dca167b5f9460ec]::run_compiler::{closure#0}>::{closure#1}, ()>::{closure#3}::{closure#0}::{closure#1}, ()>::{closure#0}::{closure#0}::{closure#0}, ()>::{closure#0} as core[4d7d767c64ee5587]::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  14:     0x7f4d240dff0e - std[f818c7cd7e376af1]::sys::backtrace::__rust_begin_short_backtrace::<alloc[e72992aa51c730d6]::boxed::Box<dyn core[4d7d767c64ee5587]::ops::function::FnOnce<(), Output = ()> + core[4d7d767c64ee5587]::marker::Send>, ()>
+  15:     0x7f4d240f1ffa - <<std[f818c7cd7e376af1]::thread::Builder>::spawn_unchecked_<alloc[e72992aa51c730d6]::boxed::Box<dyn core[4d7d767c64ee5587]::ops::function::FnOnce<(), Output = ()> + core[4d7d767c64ee5587]::marker::Send>, ()>::{closure#1} as core[4d7d767c64ee5587]::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  16:     0x7f4d2691812b - std::sys::pal::unix::thread::Thread::new::thread_start::h55a2dc483f8d79dc
+  17:     0x7f4d2068aaa4 - <unknown>
+  18:     0x7f4d20717c3c - <unknown>
+  19:                0x0 - <unknown>
+
+
+rustc version: 1.88.0-nightly (00095b3da 2025-04-03)
+platform: x86_64-unknown-linux-gnu
