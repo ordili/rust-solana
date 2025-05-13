@@ -61,7 +61,10 @@ async fn create_mint_account(
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
-    println!("Mint account transaction signature: {}", transaction_signature);
+    println!(
+        "Mint account transaction signature: {}",
+        transaction_signature
+    );
     println!("----------------------end create_mint_account------------------------------\n");
     Ok(())
 }
@@ -80,7 +83,7 @@ async fn mint_to_ata(
     let mint_to_instruction = mint_to(
         &token_2022_program_id(),
         mint_pubkey,            // mint
-        account_pubkey,     // destination
+        account_pubkey,         // destination
         &authority.pubkey(),    // authority
         &[&authority.pubkey()], // signer
         amount,                 // amount
@@ -158,9 +161,9 @@ async fn token_transfer(
     // Create transfer_checked instruction to send tokens from source to destination
     let transfer_instruction = transfer_checked(
         &token_2022_program_id(), // program id
-        source_pubkey,                 // source
+        source_pubkey,            // source
         mint_pubkey,              // mint
-        destination_pubkey,                   // destination
+        destination_pubkey,       // destination
         &authority.pubkey(),      // owner of source
         &[&authority.pubkey()],   // signers
         amount,                   // amount
@@ -204,29 +207,40 @@ mod tests {
         let before_balance = client.get_balance(&authority.pubkey()).await?;
         create_mint_account(&client, &authority, &mint).await?;
         let after_balance = client.get_balance(&authority.pubkey()).await?;
-        
-        println!("beore balance is {}, after balance is {}, the differ is {}",before_balance,after_balance, (before_balance-after_balance));
-        
+
+        println!(
+            "beore balance is {}, after balance is {}, the differ is {}",
+            before_balance,
+            after_balance,
+            (before_balance - after_balance)
+        );
+
         let mint_balance = client.get_balance(&mint.pubkey()).await?;
-        println!("mint_balance balance is {}",mint_balance);
-        
+        println!("mint_balance balance is {}", mint_balance);
+
         println!("create mint account : {:?}", &mint.pubkey());
 
         let mint_data = client.get_account_data(&mint.pubkey()).await?;
         let mint_account_data = Mint::unpack_from_slice(&mint_data).unwrap();
-        
-        assert_eq!(mint_account_data.is_initialized,true);
-        assert_eq!(mint_account_data.decimals ,2);
-        assert_eq!(mint_account_data.supply,0);
-        
-        assert_eq!(mint_account_data.freeze_authority,COption::Some(authority.pubkey()));
-        assert_eq!(mint_account_data.mint_authority,COption::Some(authority.pubkey()));
+
+        assert_eq!(mint_account_data.is_initialized, true);
+        assert_eq!(mint_account_data.decimals, 2);
+        assert_eq!(mint_account_data.supply, 0);
+
+        assert_eq!(
+            mint_account_data.freeze_authority,
+            COption::Some(authority.pubkey())
+        );
+        assert_eq!(
+            mint_account_data.mint_authority,
+            COption::Some(authority.pubkey())
+        );
 
         let mint_account = client.get_account(&mint.pubkey()).await?;
-        assert_eq!(mint_account.executable, false );
+        assert_eq!(mint_account.executable, false);
         assert_eq!(mint_account.owner, token_2022_program_id());
 
-        println!("authority account : {:?}",&authority.pubkey());
+        println!("authority account : {:?}", &authority.pubkey());
 
         Ok(())
     }
@@ -242,15 +256,15 @@ mod tests {
 
         let wallet = Keypair::new();
         common::airdrop(&client, &wallet, LAMPORTS_PER_SOL * 3).await?;
-        println!("wallet is : {:?}\n",wallet.pubkey());
+        println!("wallet is : {:?}\n", wallet.pubkey());
         let ata = create_ata(&client, &wallet, &mint.pubkey()).await?;
         println!("ata is {:?}", &ata);
 
         let ata_data = client.get_account_data(&ata).await?;
         let ata_account_data = Account::unpack_from_slice(&ata_data).unwrap();
         println!("\nata account data is : {:?}", ata_account_data);
-        
-        assert_eq!(ata_account_data.amount,0);
+
+        assert_eq!(ata_account_data.amount, 0);
         assert_eq!(ata_account_data.mint, mint.pubkey());
         assert_eq!(ata_account_data.owner, wallet.pubkey());
         assert_eq!(ata_account_data.is_native, COption::None);
@@ -282,13 +296,13 @@ mod tests {
 
         let ata_data = client.get_account_data(&ata).await?;
         let ata_data_account = Account::unpack_from_slice(&ata_data).unwrap();
-        assert_eq!(ata_data_account.amount,1000);
-        println!("\n ata_data_account is : {:?}",ata_data_account);
+        assert_eq!(ata_data_account.amount, 1000);
+        println!("\n ata_data_account is : {:?}", ata_data_account);
         Ok(())
     }
-    
+
     #[actix_rt::test]
-    async fn test_token_transfer_2() -> Result<()> {
+    async fn test_token_transfer() -> Result<()> {
         let client = common::get_rpc_client();
 
         let authority = Keypair::new();
@@ -312,10 +326,16 @@ mod tests {
         let dest_ata = create_ata(&client, &dest_wallet, &mint.pubkey()).await?;
 
         let mint_amount = 1000;
-        mint_to_ata(&client, &mint.pubkey(), &authority, &source_ata, mint_amount).await?;
+        mint_to_ata(
+            &client,
+            &mint.pubkey(),
+            &authority,
+            &source_ata,
+            mint_amount,
+        )
+        .await?;
         mint_to_ata(&client, &mint.pubkey(), &authority, &dest_ata, mint_amount).await?;
 
-        
         println!("source_ata account is : {:?}", &source_ata);
         println!("dest_ata account is : {:?}", &dest_ata);
 
@@ -330,7 +350,15 @@ mod tests {
         )
         .await?;
 
+        let source_ata_account_data = client.get_account_data(&source_ata).await?;
+        let dest_ata_account_data = client.get_account_data(&dest_ata).await?;
+
+        let source_ata_account = Account::unpack_from_slice(&source_ata_account_data).unwrap();
+        let dest_ata_account = Account::unpack_from_slice(&dest_ata_account_data).unwrap();
+
+        assert_eq!(source_ata_account.amount, mint_amount - transfer_amount);
+        assert_eq!(dest_ata_account.amount, mint_amount + transfer_amount);
+
         Ok(())
     }
 }
-
