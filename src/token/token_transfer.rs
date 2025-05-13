@@ -190,8 +190,6 @@ async fn token_transfer(
 }
 
 mod tests {
-    use std::sync::Arc;
-
     use solana_sdk::program_option::COption;
     use spl_token_2022::state::{Account, AccountState};
 
@@ -296,7 +294,7 @@ mod tests {
 
         let ata_data = client.get_account_data(&ata).await?;
         let ata_data_account = Account::unpack_from_slice(&ata_data).unwrap();
-        assert_eq!(ata_data_account.amount, 1000);
+        assert_eq!(ata_data_account.amount, mint_amount);
         println!("\n ata_data_account is : {:?}", ata_data_account);
         Ok(())
     }
