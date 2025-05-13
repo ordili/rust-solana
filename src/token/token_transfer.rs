@@ -1,10 +1,7 @@
 use crate::common;
 use anyhow::Result;
 use solana_sdk::{
-    program_pack::Pack,
-    signature::{Keypair, Signer},
-    system_instruction::create_account,
-    transaction::Transaction,
+    native_token::LAMPORTS_PER_SOL, program_pack::Pack, signature::{Keypair, Signer}, system_instruction::create_account, transaction::Transaction
 };
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
@@ -24,8 +21,9 @@ async fn token_transfer_example() -> Result<()> {
     let fee_payer = Keypair::new();
     // Generate a second keypair for the token recipient
     let recipient = Keypair::new();
-
-    common::airdrop(&client, &fee_payer, 1_000_000_000).await?;
+    println!("fee payer is : {:?}\n", &fee_payer.pubkey());
+    println!("recipient  is : {:?}\n", &recipient.pubkey());
+    common::airdrop(&client, &fee_payer, LAMPORTS_PER_SOL * 10).await?;
 
     // Generate keypair to use as address of mint
     let mint = Keypair::new();
@@ -114,14 +112,14 @@ async fn token_transfer_example() -> Result<()> {
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
-    println!("Mint Address: {}", mint.pubkey());
-    println!("Source Token Account Address: {}", source_token_address);
+    println!("Mint Address: {}\n", mint.pubkey());
+    println!("Source Token Account Address: {}\n", source_token_address);
     println!(
-        "Destination Token Account Address: {}",
+        "Destination Token Account Address: {}\n",
         destination_token_address
     );
     println!("Setup Transaction Signature: {}", transaction_signature);
-    println!("Minted {} tokens to the source token account", amount);
+    println!("Minted {} tokens to the source token account\n", amount);
 
     // Get the latest blockhash for the transfer transaction
     let recent_blockhash = client.get_latest_blockhash().await?;
@@ -149,11 +147,16 @@ async fn token_transfer_example() -> Result<()> {
         recent_blockhash,
     );
 
+    let payer_balance_before_transfer = client.get_balance(&fee_payer.pubkey()).await?;
+    println!("payer_balance_before_transfer {}\n",payer_balance_before_transfer  );
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
     println!("Successfully transferred 0.50 tokens from sender to recipient");
     println!("Transaction Signature: {}", transaction_signature);
+
+    let payer_balance_after_transfer = client.get_balance(&fee_payer.pubkey()).await?;
+    println!("payer_balance_after_transfer {}\n",payer_balance_after_transfer  );
 
     // Get token account balances to verify the transfer
     let source_token_account = client.get_token_account(&source_token_address).await?;
@@ -179,7 +182,7 @@ async fn token_transfer_example() -> Result<()> {
 mod tests {
     use super::*;
     #[test]
-    fn test_get_account() {
+    fn test_token_transfer_example() {
         let account_info = tokio_test::block_on(token_transfer_example());
         println!("{:#?}", account_info);
     }

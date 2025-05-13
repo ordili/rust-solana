@@ -5,6 +5,7 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_sdk::sysvar;
 use solana_sdk::{bs58, pubkey};
 
 pub fn create_keypair() -> Keypair {
