@@ -1,4 +1,3 @@
-use std::fs;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::account::Account;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -7,6 +6,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::sysvar;
 use solana_sdk::{bs58, pubkey};
+use std::fs;
 
 pub fn create_keypair() -> Keypair {
     let keypair = Keypair::new();
@@ -70,8 +70,7 @@ pub async fn get_account(client: &RpcClient, keypair: &Pubkey) -> anyhow::Result
     Ok(account_info)
 }
 
-pub fn get_key_pair_from_local_json()-> anyhow::Result<Keypair> {
-
+pub fn get_key_pair_from_local_json() -> anyhow::Result<Keypair> {
     let default_keypair_path = "D:\\data\\id.json";
     let keypair_file = fs::read_to_string(default_keypair_path)?;
     let keypair_bytes: Vec<u8> = serde_json::from_str(&keypair_file)?;
@@ -89,7 +88,7 @@ mod tests {
         let account_info = tokio_test::block_on(get_account(&client, &pub_key_id));
         println!("{:#?}", account_info);
     }
-    
+
     #[test]
     fn test_get_key_pair_from_local_json() {
         get_key_pair_from_local_json().unwrap();

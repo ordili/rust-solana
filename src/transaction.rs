@@ -89,7 +89,7 @@ mod test {
 
         let after_balance = client.get_balance(&to_pub_key).await?;
 
-        assert_eq!(before_balance+lamports, after_balance);
+        assert_eq!(before_balance + lamports, after_balance);
         println!("before_balance: {}", before_balance);
         println!("after_balance: {}", after_balance);
 

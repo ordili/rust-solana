@@ -1,7 +1,11 @@
 use crate::common;
 use anyhow::Result;
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::{program_pack::Pack, signature::{Keypair, Signer}, system_instruction::create_account, transaction::Transaction
+use solana_sdk::{
+    program_pack::Pack,
+    signature::{Keypair, Signer},
+    system_instruction::create_account,
+    transaction::Transaction,
 };
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
@@ -12,7 +16,7 @@ use spl_token_2022::{
     state::Mint,
 };
 
-fn mint_token_example(client : &RpcClient) -> Result<()> {
+fn mint_token_example(client: &RpcClient) -> Result<()> {
     let recent_blockhash = client.get_latest_blockhash()?;
 
     // Generate a new keypair for the fee payer
@@ -119,14 +123,17 @@ fn mint_token_example(client : &RpcClient) -> Result<()> {
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction)?;
 
-    println!("Successfully minted {} tokens to the associated token account", amount);
+    println!(
+        "Successfully minted {} tokens to the associated token account",
+        amount
+    );
     println!("Transaction Signature: {}", transaction_signature);
 
     Ok(())
 }
 
 #[cfg(test)]
-mod tests {    
+mod tests {
     use solana_sdk::commitment_config::CommitmentConfig;
 
     use super::*;
