@@ -2,21 +2,34 @@ use anyhow::{Context, Result};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
+    pubkey::Pubkey,
     signature::{Keypair, Signer},
+    transaction::Transaction,
+};
+use spl_associated_token_account::{
+    get_associated_token_address_with_program_id, instruction::create_associated_token_account,
+};
+use spl_token_2022::{
+    extension::{
+        ExtensionType,
+        confidential_transfer::instruction::{PubkeyValidityProofData, configure_account},
+    },
+    instruction::reallocate,
+    solana_zk_sdk::encryption::{auth_encryption::AeKey, elgamal::ElGamalKeypair},
 };
 use spl_token_client::{
     client::{ProgramRpcClient, ProgramRpcClientSendTransaction},
     spl_token_2022::id as token_2022_program_id,
     token::{ExtensionInitializationParams, Token},
 };
+use spl_token_confidential_transfer_proof_extraction::instruction::{ProofData, ProofLocation};
 use std::sync::Arc;
 
-async fn confidential_mint(
+async fn create_confidential_mint(
     rpc_client: RpcClient,
     authority: Arc<Keypair>,
     mint: &Keypair,
 ) -> Result<()> {
-    
     println!("Using payer: {}", authority.pubkey());
 
     println!("Mint keypair generated: {}", mint.pubkey());
@@ -82,17 +95,129 @@ fn load_keypair() -> Result<Keypair> {
     Ok(keypair)
 }
 
+async fn create_confidential_token_account(
+    rpc_client: Arc<RpcClient>,
+    wallet: Arc<Keypair>,
+    token_mint_address: &Pubkey,
+) -> Result<Pubkey> {
+    // ===== Create and configure token account for confidential transfers =====
+    println!("\nCreate and configure token account for confidential transfers");
+
+    // Get the associated token account address for the owner
+    let token_account_pubkey = get_associated_token_address_with_program_id(
+        &wallet.pubkey(),         // Token account owner
+        token_mint_address,       // Mint
+        &token_2022_program_id(), // Token program ID
+    );
+    println!("Token Account Address: {}", token_account_pubkey);
+
+    // Step 1: Create the associated token account
+    let create_associated_token_account_instruction = create_associated_token_account(
+        &wallet.pubkey(),         // Funding account
+        &wallet.pubkey(),         // Token account owner
+        token_mint_address,       // Mint
+        &token_2022_program_id(), // Token program ID
+    );
+
+    // Step 2: Reallocate the token account to include space for the ConfidentialTransferAccount extension
+    let reallocate_instruction = reallocate(
+        &token_2022_program_id(),                      // Token program ID
+        &token_account_pubkey,                         // Token account
+        &wallet.pubkey(),                              // Payer
+        &wallet.pubkey(),                              // Token account owner
+        &[&wallet.pubkey()],                           // Signers
+        &[ExtensionType::ConfidentialTransferAccount], // Extension to reallocate space for
+    )?;
+
+    // Step 3: Generate the ElGamal keypair and AES key for token account
+    let elgamal_keypair =
+        ElGamalKeypair::new_from_signer(&wallet, &token_account_pubkey.to_bytes())
+            .expect("Failed to create ElGamal keypair");
+    let aes_key = AeKey::new_from_signer(&wallet, &token_account_pubkey.to_bytes())
+        .expect("Failed to create AES key");
+
+    // The maximum number of Deposit and Transfer instructions that can
+    // credit pending_balance before the ApplyPendingBalance instruction is executed
+    let maximum_pending_balance_credit_counter = 65536;
+
+    // Initial token balance is 0
+    let decryptable_balance = aes_key.encrypt(0);
+
+    // Generate the proof data client-side
+    let proof_data = PubkeyValidityProofData::new(&elgamal_keypair)
+        .map_err(|_| anyhow::anyhow!("Failed to generate proof data"))?;
+
+    // Indicate that proof is included in the same transaction
+    let proof_location =
+        ProofLocation::InstructionOffset(1.try_into()?, ProofData::InstructionData(&proof_data));
+
+    // Step 4: Create instructions to configure the account for confidential transfers
+    let configure_account_instructions = configure_account(
+        &token_2022_program_id(),               // Program ID
+        &token_account_pubkey,                  // Token account
+        token_mint_address,                     // Mint
+        &decryptable_balance.into(),            // Initial balance
+        maximum_pending_balance_credit_counter, // Maximum pending balance credit counter
+        &wallet.pubkey(),                       // Token Account Owner
+        &[],                                    // Additional signers
+        proof_location,                         // Proof location
+    )?;
+
+    // Combine all instructions
+    let mut instructions = vec![
+        create_associated_token_account_instruction,
+        reallocate_instruction,
+    ];
+    instructions.extend(configure_account_instructions);
+
+    // Create and send the transaction
+    let recent_blockhash = rpc_client.get_latest_blockhash().await?;
+    let transaction = Transaction::new_signed_with_payer(
+        &instructions,
+        Some(&wallet.pubkey()),
+        &[&wallet],
+        recent_blockhash,
+    );
+
+    let transaction_signature = rpc_client
+        .send_and_confirm_transaction(&transaction)
+        .await?;
+    println!(
+        "Create Token Account Transaction Signature: {}",
+        transaction_signature
+    );
+
+    Ok(token_account_pubkey)
+}
 pub mod test {
     use crate::common;
 
     use super::*;
 
     #[actix_rt::test]
-    pub async fn test_confidential_mint() -> Result<()> {
+    pub async fn test_create_confidential_mint() -> Result<()> {
         let clent = common::get_rpc_client();
         let payer = Arc::new(load_keypair()?);
         let mint = Keypair::new();
-        confidential_mint(clent, payer, &mint).await?;
+        create_confidential_mint(clent, payer, &mint).await?;
+        Ok(())
+    }
+
+    #[actix_rt::test]
+    pub async fn test_create_confidential_token_account() -> Result<()> {
+        let clent_arc = Arc::new(common::get_rpc_client());
+        let clent = common::get_rpc_client();
+        let payer = Arc::new(load_keypair()?);
+        let mint = Keypair::new();
+
+        create_confidential_mint(clent, Arc::clone(&payer), &mint).await?;
+
+        let token_account =
+            create_confidential_token_account(clent_arc, Arc::clone(&payer), &mint.pubkey())
+                .await?;
+
+        println!("\ntoken account is : {:?}", token_account);
+
         Ok(())
     }
 }
