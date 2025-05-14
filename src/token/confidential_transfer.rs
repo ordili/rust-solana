@@ -30,10 +30,6 @@ async fn create_confidential_mint(
     authority: Arc<Keypair>,
     mint: &Keypair,
 ) -> Result<()> {
-    println!("Using payer: {}", authority.pubkey());
-
-    println!("Mint keypair generated: {}", mint.pubkey());
-
     // Set up program client for Token client
     let program_client = ProgramRpcClient::new(rpc_client, ProgramRpcClientSendTransaction);
 
@@ -72,7 +68,8 @@ async fn create_confidential_mint(
 
     // Print results for user verification
     println!("Mint Address: {}", mint.pubkey());
-    println!("Transaction Signature: {}", transaction_signature);
+    println!("Authority Address : {}", authority.pubkey());
+    println!("Transaction Signature: {}\n", transaction_signature);
 
     Ok(())
 }
