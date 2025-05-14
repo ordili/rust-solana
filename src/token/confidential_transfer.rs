@@ -96,13 +96,13 @@ async fn create_confidential_token_account(
     wallet: Arc<Keypair>,
     token_mint_address: &Pubkey,
 ) -> Result<Pubkey> {
-    // ===== Create and configure token account for confidential transfers =====
+    
     println!("\nCreate and configure token account for confidential transfers");
 
     // Get the associated token account address for the owner
     let token_account_pubkey = get_associated_token_address_with_program_id(
         &wallet.pubkey(),         // Token account owner
-        token_mint_address,       // Mint
+        token_mint_address,                         // Mint
         &token_2022_program_id(), // Token program ID
     );
     println!("Token Account Address: {}", token_account_pubkey);
@@ -110,17 +110,17 @@ async fn create_confidential_token_account(
     // Step 1: Create the associated token account
     let create_associated_token_account_instruction = create_associated_token_account(
         &wallet.pubkey(),         // Funding account
-        &wallet.pubkey(),         // Token account owner
-        token_mint_address,       // Mint
+        &wallet.pubkey(),          // Token account owner
+        token_mint_address,                         // Mint
         &token_2022_program_id(), // Token program ID
     );
 
     // Step 2: Reallocate the token account to include space for the ConfidentialTransferAccount extension
     let reallocate_instruction = reallocate(
         &token_2022_program_id(),                      // Token program ID
-        &token_account_pubkey,                         // Token account
-        &wallet.pubkey(),                              // Payer
-        &wallet.pubkey(),                              // Token account owner
+        &token_account_pubkey,                                          // Token account
+        &wallet.pubkey(),                                           // Payer
+        &wallet.pubkey(),                                   // Token account owner
         &[&wallet.pubkey()],                           // Signers
         &[ExtensionType::ConfidentialTransferAccount], // Extension to reallocate space for
     )?;
@@ -150,12 +150,12 @@ async fn create_confidential_token_account(
     // Step 4: Create instructions to configure the account for confidential transfers
     let configure_account_instructions = configure_account(
         &token_2022_program_id(),               // Program ID
-        &token_account_pubkey,                  // Token account
-        token_mint_address,                     // Mint
-        &decryptable_balance.into(),            // Initial balance
-        maximum_pending_balance_credit_counter, // Maximum pending balance credit counter
-        &wallet.pubkey(),                       // Token Account Owner
-        &[],                                    // Additional signers
+        &token_account_pubkey,                                    // Token account
+        token_mint_address,                                 // Mint
+        &decryptable_balance.into(),       // Initial balance
+        maximum_pending_balance_credit_counter,                     // Maximum pending balance credit counter
+        &wallet.pubkey(),                                  // Token Account Owner
+        &[],                                        // Additional signers
         proof_location,                         // Proof location
     )?;
 
