@@ -18,6 +18,51 @@ use spl_token_2022::{
     state::Mint,
 };
 
+async fn only_create_account(
+    client: &RpcClient,
+    authority: &Keypair,
+    account: &Keypair,
+    owner: &Pubkey,
+) -> Result<()> {
+    println!("----------------------begin only_create_account------------------------------");
+    
+    // Get default mint account size (in bytes), no extensions enabled
+    let mint_space = Mint::LEN;
+    let mint_rent = client
+        .get_minimum_balance_for_rent_exemption(mint_space)
+        .await?;
+
+    // Instruction to create new account for mint (token 2022 program)
+    let create_account_instruction = create_account(
+        &authority.pubkey(), // payer
+        &account.pubkey(),   // new account (mint)
+        mint_rent,           // lamports
+        mint_space as u64,   // space
+        owner,               // program id
+    );
+
+    let recent_blockhash = client.get_latest_blockhash().await?;
+
+    // Create transaction and add instructions
+    let transaction = Transaction::new_signed_with_payer(
+        &[create_account_instruction],
+        Some(&authority.pubkey()),
+        &[&authority,&account],
+        recent_blockhash,
+    );
+
+    // Send and confirm transaction
+    let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
+    println!("create account : {}", &account.pubkey());
+    println!("authority account : {}", &authority.pubkey());
+    println!(
+        "Create account transaction signature: {}",
+        transaction_signature
+    );
+    println!("----------------------end only_create_account------------------------------\n");
+    Ok(())
+}
+
 async fn create_mint_account(
     client: &RpcClient,
     authority: &Keypair,
@@ -192,7 +237,8 @@ async fn token_transfer(
 mod tests {
     use solana_sdk::program_option::COption;
     use spl_token_2022::state::{Account, AccountState};
-
+    use std::io::Read;
+    use solana_sdk::nonce_account::SystemAccountKind::System;
     use super::*;
 
     #[actix_rt::test]
@@ -357,6 +403,19 @@ mod tests {
         assert_eq!(source_ata_account.amount, mint_amount - transfer_amount);
         assert_eq!(dest_ata_account.amount, mint_amount + transfer_amount);
 
+        Ok(())
+    }
+
+    #[actix_rt::test]
+    async fn test_only_create_account() -> Result<()> {
+        let client = common::get_rpc_client();
+        let authority = Keypair::new();
+        let account = Keypair::new();
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 2).await?;
+
+        let owner = token_2022_program_id();
+        only_create_account(&client, &authority, &account, &owner).await?;
+        
         Ok(())
     }
 }
