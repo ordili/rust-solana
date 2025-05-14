@@ -96,13 +96,12 @@ async fn create_confidential_token_account(
     wallet: Arc<Keypair>,
     token_mint_address: &Pubkey,
 ) -> Result<Pubkey> {
-    
     println!("\nCreate and configure token account for confidential transfers");
 
     // Get the associated token account address for the owner
     let token_account_pubkey = get_associated_token_address_with_program_id(
         &wallet.pubkey(),         // Token account owner
-        token_mint_address,                         // Mint
+        token_mint_address,       // Mint
         &token_2022_program_id(), // Token program ID
     );
     println!("Token Account Address: {}", token_account_pubkey);
@@ -110,17 +109,17 @@ async fn create_confidential_token_account(
     // Step 1: Create the associated token account
     let create_associated_token_account_instruction = create_associated_token_account(
         &wallet.pubkey(),         // Funding account
-        &wallet.pubkey(),          // Token account owner
-        token_mint_address,                         // Mint
+        &wallet.pubkey(),         // Token account owner
+        token_mint_address,       // Mint
         &token_2022_program_id(), // Token program ID
     );
 
     // Step 2: Reallocate the token account to include space for the ConfidentialTransferAccount extension
     let reallocate_instruction = reallocate(
         &token_2022_program_id(),                      // Token program ID
-        &token_account_pubkey,                                          // Token account
-        &wallet.pubkey(),                                           // Payer
-        &wallet.pubkey(),                                   // Token account owner
+        &token_account_pubkey,                         // Token account
+        &wallet.pubkey(),                              // Payer
+        &wallet.pubkey(),                              // Token account owner
         &[&wallet.pubkey()],                           // Signers
         &[ExtensionType::ConfidentialTransferAccount], // Extension to reallocate space for
     )?;
@@ -150,12 +149,12 @@ async fn create_confidential_token_account(
     // Step 4: Create instructions to configure the account for confidential transfers
     let configure_account_instructions = configure_account(
         &token_2022_program_id(),               // Program ID
-        &token_account_pubkey,                                    // Token account
-        token_mint_address,                                 // Mint
-        &decryptable_balance.into(),       // Initial balance
-        maximum_pending_balance_credit_counter,                     // Maximum pending balance credit counter
-        &wallet.pubkey(),                                  // Token Account Owner
-        &[],                                        // Additional signers
+        &token_account_pubkey,                  // Token account
+        token_mint_address,                     // Mint
+        &decryptable_balance.into(),            // Initial balance
+        maximum_pending_balance_credit_counter, // Maximum pending balance credit counter
+        &wallet.pubkey(),                       // Token Account Owner
+        &[],                                    // Additional signers
         proof_location,                         // Proof location
     )?;
 
@@ -186,14 +185,13 @@ async fn create_confidential_token_account(
     Ok(token_account_pubkey)
 }
 
-pub async fn confidential_mint_token_to_ata(
+pub async fn transfer_public_balance_to_confidential_pending_balance(
     rpc_client: Arc<RpcClient>,
     authority: Arc<Keypair>,
     mint: Keypair,
     token_owner: Arc<Keypair>,
     token_account_pubkey: Pubkey,
 ) -> Result<()> {
-
     // Set up program client for Token client
     let program_client = ProgramRpcClient::new(rpc_client.clone(), ProgramRpcClientSendTransaction);
     let decimals = 9;
@@ -205,7 +203,7 @@ pub async fn confidential_mint_token_to_ata(
         &token_2022_program_id(), // Use the Token-2022 program (newer version with extensions)
         &mint.pubkey(),           // Address of the new token mint
         Some(decimals),           // Number of decimal places
-        authority.clone(),            // Fee payer for transactions
+        authority.clone(),        // Fee payer for transactions
     );
 
     // Mint some tokens to the newly created token account
@@ -213,9 +211,9 @@ pub async fn confidential_mint_token_to_ata(
     let mint_signature = token
         .mint_to(
             &token_account_pubkey,            // Destination account
-            &authority.pubkey(),                  // Mint authority
+            &authority.pubkey(),              // Mint authority
             100 * 10u64.pow(decimals as u32), // Amount (100 tokens with decimal precision)
-            &[&authority],                        // Signers
+            &[&authority],                    // Signers
         )
         .await?;
 
@@ -226,11 +224,11 @@ pub async fn confidential_mint_token_to_ata(
     println!("Deposit tokens to confidential state pending balance");
     let deposit_signature = token
         .confidential_transfer_deposit(
-            &token_account_pubkey,                  // The token account
-            &token_owner.pubkey(),                // Authority (owner) of the account
-            100 * 10u64.pow(decimals as u32),   // Amount to deposit (100 tokens)
-            decimals,                                       // Decimals of the token
-            &[&token_owner],               // Signers (owner must sign)
+            &token_account_pubkey,            // The token account
+            &token_owner.pubkey(),            // Authority (owner) of the account
+            100 * 10u64.pow(decimals as u32), // Amount to deposit (100 tokens)
+            decimals,                         // Decimals of the token
+            &[&token_owner],                  // Signers (owner must sign)
         )
         .await?;
 
@@ -239,6 +237,58 @@ pub async fn confidential_mint_token_to_ata(
         deposit_signature
     );
 
+    Ok(())
+}
+
+pub async fn transfer_confidential_pending_balance_to_available_balance(
+    rpc_client: Arc<RpcClient>,
+    authority: Arc<Keypair>,
+    mint: Keypair,
+    token_account_owner : &Keypair,
+    token_account_pubkey: &Pubkey,
+) -> Result<()> {
+    // Set up program client for Token client
+    let program_client = ProgramRpcClient::new(rpc_client.clone(), ProgramRpcClientSendTransaction);
+
+    // Number of decimals for the mint
+    let decimals = 9;
+
+    // Create a token client for the Token-2022 program
+    // This provides high-level methods for token operations
+    let token = Token::new(
+        Arc::new(program_client),
+        &token_2022_program_id(), // Use the Token-2022 program (newer version with extensions)
+        &mint.pubkey(),           // Address of the new token mint
+        Some(decimals),           // Number of decimal places
+        authority.clone(),        // Fee payer for transactions
+    );
+
+    let elgamal_keypair =
+        ElGamalKeypair::new_from_signer(&token_account_owner, &token_account_pubkey.to_bytes())
+            .expect("Failed to create ElGamal keypair");
+    let aes_key = AeKey::new_from_signer(&token_account_owner, &token_account_pubkey.to_bytes())
+        .expect("Failed to create AES key");
+    
+    // Apply the pending balance to make funds available
+    println!("Apply pending balance to available balance");
+    let apply_signature = token
+        .confidential_transfer_apply_pending_balance(
+            &token_account_pubkey,    // The token account
+            &token_account_owner.pubkey(),      // Authority (owner) of the account
+            None,                     // Optional new decryptable available balance
+            elgamal_keypair.secret(), // ElGamal keypair for public-key cryptography (decryption and ZK proofs)
+            &aes_key,                 // AES key for encryption of balance and transfer amounts
+            &[&token_account_owner],            // Signers (owner must sign)
+        )
+        .await?;
+
+    println!("Apply Pending Balance Signature: {}", apply_signature);
+
+    println!("Confidential transfer setup complete. Tokens are now in available balance.");
+    println!(
+        "Associated Token Account with confidential transfers: {}",
+        token_account_pubkey
+    );
     Ok(())
 }
 
@@ -278,15 +328,15 @@ pub mod test {
     }
 
     #[actix_rt::test]
-    pub async fn test_confidential_mint_token_to_ata() -> Result<()> {
+    pub async fn test_transfer_public_balance_to_confidential_pending_balance() -> Result<()> {
         let client = Arc::new(common::get_rpc_client());
         let authority = Arc::new(load_keypair()?);
         let mint = Keypair::new();
 
         create_confidential_mint(Arc::clone(&client), Arc::clone(&authority), &mint).await?;
 
-        let wallet =  Arc::clone(&authority);//Arc::new(Keypair::new());
-        
+        let wallet = Arc::clone(&authority); //Arc::new(Keypair::new());
+
         common::airdrop2(Arc::clone(&client), &wallet.pubkey(), LAMPORTS_PER_SOL * 3).await?;
         println!("wallet is : {:?}", &wallet.pubkey());
 
@@ -297,7 +347,7 @@ pub mod test {
         )
         .await?;
 
-        confidential_mint_token_to_ata(
+        transfer_public_balance_to_confidential_pending_balance(
             Arc::clone(&client),
             Arc::clone(&authority),
             mint,
