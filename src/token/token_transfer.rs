@@ -25,7 +25,7 @@ async fn only_create_account(
     owner: &Pubkey,
 ) -> Result<()> {
     println!("----------------------begin only_create_account------------------------------");
-    
+
     // Get default mint account size (in bytes), no extensions enabled
     let mint_space = Mint::LEN;
     let mint_rent = client
@@ -47,7 +47,7 @@ async fn only_create_account(
     let transaction = Transaction::new_signed_with_payer(
         &[create_account_instruction],
         Some(&authority.pubkey()),
-        &[&authority,&account],
+        &[&authority, &account],
         recent_blockhash,
     );
 
@@ -234,12 +234,44 @@ async fn token_transfer(
     Ok(())
 }
 
+async fn init_mint(client: &RpcClient, authority: &Keypair, mint: &Keypair) -> Result<()> {
+    println!("----------------------begin init_mint------------------------------\n");
+    // Instruction to initialize mint account data
+    let initialize_mint_instruction = initialize_mint(
+        &token_2022_program_id(),
+        &mint.pubkey(),            // mint
+        &authority.pubkey(),       // mint authority
+        Some(&authority.pubkey()), // freeze authority
+        2,                         // decimals
+    )?;
+
+    let recent_blockhash = client.get_latest_blockhash().await?;
+
+    // Create transaction and add instructions
+    let transaction = Transaction::new_signed_with_payer(
+        &[initialize_mint_instruction],
+        Some(&authority.pubkey()),
+        &[&authority],
+        recent_blockhash,
+    );
+
+    // Send and confirm transaction
+    let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
+
+    println!(
+        "Mint init transaction signature: {}",
+        transaction_signature
+    );
+    println!("----------------------end init_mint------------------------------\n");
+    Ok(())
+}
+
 mod tests {
+    use super::*;
+    use solana_sdk::nonce_account::SystemAccountKind::System;
     use solana_sdk::program_option::COption;
     use spl_token_2022::state::{Account, AccountState};
     use std::io::Read;
-    use solana_sdk::nonce_account::SystemAccountKind::System;
-    use super::*;
 
     #[actix_rt::test]
     async fn test_create_mint_account() -> Result<()> {
@@ -415,7 +447,22 @@ mod tests {
 
         let owner = token_2022_program_id();
         only_create_account(&client, &authority, &account, &owner).await?;
-        
+
+        Ok(())
+    }
+
+    #[actix_rt::test]
+    async fn test_init_mint() -> Result<()> {
+        let client = common::get_rpc_client();
+        let authority = Keypair::new();
+        let account = Keypair::new();
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 2).await?;
+
+        let owner = token_2022_program_id();
+        only_create_account(&client, &authority, &account, &owner).await?;
+
+        init_mint(&client, &authority, &account).await?;
+
         Ok(())
     }
 }
