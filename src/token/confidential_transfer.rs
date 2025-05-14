@@ -179,7 +179,7 @@ async fn create_confidential_token_account(
         .send_and_confirm_transaction(&transaction)
         .await?;
     println!(
-        "Create Token Account Transaction Signature: {}",
+        "Create Token Account Transaction Signature: {}\n",
         transaction_signature
     );
 
@@ -188,10 +188,12 @@ async fn create_confidential_token_account(
 
 pub async fn confidential_mint_token_to_ata(
     rpc_client: Arc<RpcClient>,
-    payer: Arc<Keypair>,
+    authority: Arc<Keypair>,
     mint: Keypair,
+    token_owner: Arc<Keypair>,
     token_account_pubkey: Pubkey,
 ) -> Result<()> {
+
     // Set up program client for Token client
     let program_client = ProgramRpcClient::new(rpc_client.clone(), ProgramRpcClientSendTransaction);
     let decimals = 9;
@@ -203,7 +205,7 @@ pub async fn confidential_mint_token_to_ata(
         &token_2022_program_id(), // Use the Token-2022 program (newer version with extensions)
         &mint.pubkey(),           // Address of the new token mint
         Some(decimals),           // Number of decimal places
-        payer.clone(),            // Fee payer for transactions
+        authority.clone(),            // Fee payer for transactions
     );
 
     // Mint some tokens to the newly created token account
@@ -211,24 +213,24 @@ pub async fn confidential_mint_token_to_ata(
     let mint_signature = token
         .mint_to(
             &token_account_pubkey,            // Destination account
-            &payer.pubkey(),                  // Mint authority
+            &authority.pubkey(),                  // Mint authority
             100 * 10u64.pow(decimals as u32), // Amount (100 tokens with decimal precision)
-            &[&payer],                        // Signers
+            &[&authority],                        // Signers
         )
         .await?;
 
-    println!("Mint Tokens Transaction Signature: {}", mint_signature);
+    println!("Mint Tokens Transaction Signature: {}\n", mint_signature);
 
     // Deposit the tokens to confidential state
     // This converts regular tokens to confidential tokens
     println!("Deposit tokens to confidential state pending balance");
     let deposit_signature = token
         .confidential_transfer_deposit(
-            &token_account_pubkey,            // The token account
-            &payer.pubkey(),                  // Authority (owner) of the account
-            100 * 10u64.pow(decimals as u32), // Amount to deposit (100 tokens)
-            decimals,                         // Decimals of the token
-            &[&payer],                        // Signers (owner must sign)
+            &token_account_pubkey,                  // The token account
+            &token_owner.pubkey(),                // Authority (owner) of the account
+            100 * 10u64.pow(decimals as u32),   // Amount to deposit (100 tokens)
+            decimals,                                       // Decimals of the token
+            &[&token_owner],               // Signers (owner must sign)
         )
         .await?;
 
@@ -264,11 +266,11 @@ pub mod test {
 
         create_confidential_mint(Arc::clone(&client), Arc::clone(&authority), &mint).await?;
 
-        let wallet = Keypair::new();
+        let wallet = Arc::new(Keypair::new());
         common::airdrop2(Arc::clone(&client), &wallet.pubkey(), LAMPORTS_PER_SOL * 3).await?;
         println!("wallet is : {:?}", &wallet.pubkey());
         let token_account =
-            create_confidential_token_account(client, Arc::new(wallet), &mint.pubkey()).await?;
+            create_confidential_token_account(client, wallet, &mint.pubkey()).await?;
 
         println!("\ntoken account is : {:?}", token_account);
 
@@ -283,7 +285,8 @@ pub mod test {
 
         create_confidential_mint(Arc::clone(&client), Arc::clone(&authority), &mint).await?;
 
-        let wallet = Arc::new(Keypair::new());
+        let wallet =  Arc::clone(&authority);//Arc::new(Keypair::new());
+        
         common::airdrop2(Arc::clone(&client), &wallet.pubkey(), LAMPORTS_PER_SOL * 3).await?;
         println!("wallet is : {:?}", &wallet.pubkey());
 
@@ -298,6 +301,7 @@ pub mod test {
             Arc::clone(&client),
             Arc::clone(&authority),
             mint,
+            wallet,
             token_account,
         )
         .await?;
