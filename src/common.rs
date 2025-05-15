@@ -4,7 +4,6 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_sdk::sysvar;
 use solana_sdk::{bs58, pubkey};
 use std::fs;
 use std::sync::Arc;
@@ -91,6 +90,7 @@ pub fn get_key_pair_from_local_json(keypair_path: &str) -> anyhow::Result<Keypai
 #[cfg(test)]
 mod tests {
     use super::*;
+    use solana_sdk::sysvar;
     #[test]
     fn test_get_account() {
         let client = get_rpc_client();
