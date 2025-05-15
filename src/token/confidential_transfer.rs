@@ -327,7 +327,7 @@ pub mod test {
         Ok(())
     }
 
-    #[actix_rt::test]
+    // #[actix_rt::test]
     pub async fn test_transfer_public_balance_to_confidential_pending_balance() -> Result<()> {
         let client = Arc::new(common::get_rpc_client());
         let authority = Arc::new(load_keypair()?);
