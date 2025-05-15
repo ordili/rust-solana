@@ -270,7 +270,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_create_mint_account() -> Result<()> {
         let client = common::get_rpc_client();
-        let authority = Keypair::new();//common::get_local_key_pair().unwrap();
+        let authority = Keypair::new(); //common::get_local_key_pair().unwrap();
         let mint = Keypair::new();
 
         common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 2).await?;
