@@ -87,6 +87,16 @@ pub fn get_key_pair_from_local_json(keypair_path: &str) -> anyhow::Result<Keypai
     let default_keypair = Keypair::from_bytes(&keypair_bytes)?;
     Ok(default_keypair)
 }
+
+pub fn get_local_key_pair() -> anyhow::Result<Keypair> {
+    let path = "/home/gidon/.config/solana/id.json".to_string();
+    let keypair_file = fs::read_to_string(&path)?;
+    let keypair_bytes: Vec<u8> = serde_json::from_str(&keypair_file)?;
+
+    let default_keypair = Keypair::from_bytes(&keypair_bytes)?;
+    Ok(default_keypair)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

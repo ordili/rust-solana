@@ -12,7 +12,6 @@ fn initialize_and_incremenet_account(
     program: &Program<Rc<Keypair>>,
     counter: &Keypair,
 ) -> anyhow::Result<()> {
-
     initialize_counter(program, counter).unwrap();
     increment_account(program, counter).unwrap();
 

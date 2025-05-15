@@ -270,9 +270,12 @@ mod tests {
     #[actix_rt::test]
     async fn test_create_mint_account() -> Result<()> {
         let client = common::get_rpc_client();
-        let authority = Keypair::new();
+        let authority = Keypair::new();//common::get_local_key_pair().unwrap();
         let mint = Keypair::new();
-        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
+
+        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 2).await?;
+
+        println!("authority account is : {:?}", &authority.pubkey());
 
         let before_balance = client.get_balance(&authority.pubkey()).await?;
         create_mint_account(&client, &authority, &mint).await?;
@@ -318,11 +321,12 @@ mod tests {
     #[actix_rt::test]
     async fn test_create_ata() -> Result<()> {
         let client = common::get_rpc_client();
-        let authority = Keypair::new();
-        let mint = Keypair::new();
+        let authority = common::get_local_key_pair().unwrap();
+        let mint: Keypair = Keypair::new();
+        println!("authority account : {:?}", &authority.pubkey());
         common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
         create_mint_account(&client, &authority, &mint).await?;
-        println!("create mint accout : {:?}", &mint.pubkey());
+        println!("create mint account : {:?}", &mint.pubkey());
 
         let wallet = Keypair::new();
         common::airdrop(&client, &wallet, LAMPORTS_PER_SOL * 3).await?;
@@ -349,10 +353,9 @@ mod tests {
     #[actix_rt::test]
     async fn test_mint_to_ata() -> Result<()> {
         let client = common::get_rpc_client();
-        let authority = Keypair::new();
+        let authority = common::get_local_key_pair().unwrap();
         let mint = Keypair::new();
-        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
-
+        println!("authority account is : {:?}", &authority.pubkey());
         create_mint_account(&client, &authority, &mint).await?;
         println!("mint accout is : {:?}", &mint.pubkey());
 
@@ -375,10 +378,9 @@ mod tests {
     async fn test_token_transfer() -> Result<()> {
         let client = common::get_rpc_client();
 
-        let authority = Keypair::new();
+        let authority = common::get_local_key_pair().unwrap();
         let mint = Keypair::new();
-        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 10).await?;
-
+        println!("authority account is : {:?}", &authority.pubkey());
         create_mint_account(&client, &authority, &mint).await?;
 
         println!("authority account is : {:?}", &authority.pubkey());
@@ -435,11 +437,10 @@ mod tests {
     #[actix_rt::test]
     async fn test_only_create_account() -> Result<()> {
         let client = common::get_rpc_client();
-        let authority = Keypair::new();
+        let authority = common::get_local_key_pair().unwrap();
         let account = Keypair::new();
-        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 2).await?;
-
         let owner = token_2022_program_id();
+        println!("authority account is : {:?}", &authority.pubkey());
         only_create_account(&client, &authority, &account, &owner).await?;
 
         Ok(())
@@ -448,9 +449,9 @@ mod tests {
     #[actix_rt::test]
     async fn test_init_mint() -> Result<()> {
         let client = common::get_rpc_client();
-        let authority = Keypair::new();
+        let authority = common::get_local_key_pair().unwrap();
         let account = Keypair::new();
-        common::airdrop(&client, &authority, LAMPORTS_PER_SOL * 2).await?;
+        println!("authority account is : {:?}", &authority.pubkey());
 
         let owner = token_2022_program_id();
         only_create_account(&client, &authority, &account, &owner).await?;
