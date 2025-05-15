@@ -262,11 +262,11 @@ async fn init_mint(client: &RpcClient, authority: &Keypair, mint: &Keypair) -> R
 }
 
 mod tests {
-    use solana_sdk::{ native_token::LAMPORTS_PER_SOL, program_option::COption};
-    use spl_token_2022::state::AccountState;
-    use spl_token_2022::state::Account;
     use super::*;
     use crate::common;
+    use solana_sdk::{native_token::LAMPORTS_PER_SOL, program_option::COption};
+    use spl_token_2022::state::Account;
+    use spl_token_2022::state::AccountState;
     #[actix_rt::test]
     async fn test_create_mint_account() -> Result<()> {
         let client = common::get_rpc_client();
