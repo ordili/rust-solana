@@ -244,7 +244,7 @@ pub async fn transfer_confidential_pending_balance_to_available_balance(
     rpc_client: Arc<RpcClient>,
     authority: Arc<Keypair>,
     mint: Keypair,
-    token_account_owner : &Keypair,
+    token_account_owner: &Keypair,
     token_account_pubkey: &Pubkey,
 ) -> Result<()> {
     // Set up program client for Token client
@@ -268,17 +268,17 @@ pub async fn transfer_confidential_pending_balance_to_available_balance(
             .expect("Failed to create ElGamal keypair");
     let aes_key = AeKey::new_from_signer(&token_account_owner, &token_account_pubkey.to_bytes())
         .expect("Failed to create AES key");
-    
+
     // Apply the pending balance to make funds available
     println!("Apply pending balance to available balance");
     let apply_signature = token
         .confidential_transfer_apply_pending_balance(
-            &token_account_pubkey,    // The token account
-            &token_account_owner.pubkey(),      // Authority (owner) of the account
-            None,                     // Optional new decryptable available balance
+            &token_account_pubkey,         // The token account
+            &token_account_owner.pubkey(), // Authority (owner) of the account
+            None,                          // Optional new decryptable available balance
             elgamal_keypair.secret(), // ElGamal keypair for public-key cryptography (decryption and ZK proofs)
             &aes_key,                 // AES key for encryption of balance and transfer amounts
-            &[&token_account_owner],            // Signers (owner must sign)
+            &[&token_account_owner],  // Signers (owner must sign)
         )
         .await?;
 

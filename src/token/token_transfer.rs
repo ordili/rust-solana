@@ -258,10 +258,7 @@ async fn init_mint(client: &RpcClient, authority: &Keypair, mint: &Keypair) -> R
     // Send and confirm transaction
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
-    println!(
-        "Mint init transaction signature: {}",
-        transaction_signature
-    );
+    println!("Mint init transaction signature: {}", transaction_signature);
     println!("----------------------end init_mint------------------------------\n");
     Ok(())
 }

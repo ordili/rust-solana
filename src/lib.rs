@@ -21,3 +21,7 @@ pub mod token {
 pub mod lite_svm;
 
 pub mod bin_code_demo;
+
+pub mod client {
+    pub mod program_client;
+}
