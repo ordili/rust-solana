@@ -1,8 +1,6 @@
-use crate::common;
 use anyhow::{Ok, Result};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
-    native_token::LAMPORTS_PER_SOL,
     program_pack::Pack,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
@@ -265,10 +263,6 @@ async fn init_mint(client: &RpcClient, authority: &Keypair, mint: &Keypair) -> R
 
 mod tests {
     use super::*;
-    use solana_sdk::nonce_account::SystemAccountKind::System;
-    use solana_sdk::program_option::COption;
-    use spl_token_2022::state::{Account, AccountState};
-    use std::io::Read;
 
     #[actix_rt::test]
     async fn test_create_mint_account() -> Result<()> {

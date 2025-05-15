@@ -1,10 +1,6 @@
 use anchor_client::{
-    Client, Cluster, Program,
-    solana_client::rpc_client::RpcClient,
-    solana_sdk::{
-        commitment_config::CommitmentConfig, native_token::LAMPORTS_PER_SOL, signature::Keypair,
-        signer::Signer, system_program,
-    },
+    Program,
+    solana_sdk::{signature::Keypair, signer::Signer, system_program},
 };
 use anchor_lang::prelude::*;
 use std::rc::Rc;
@@ -12,7 +8,10 @@ use std::rc::Rc;
 declare_program!(counter);
 use counter::{accounts::Counter, client::accounts, client::args};
 
-fn initialize_and_incremenet_account(program: &Program<Rc<Keypair>>, counter: &Keypair) -> anyhow::Result<()> {
+fn initialize_and_incremenet_account(
+    program: &Program<Rc<Keypair>>,
+    counter: &Keypair,
+) -> anyhow::Result<()> {
     // Build and send instructions
     println!("\nSend transaction with initialize and increment instructions");
     let initialize_ix = program
@@ -141,7 +140,7 @@ mod test {
     }
 
     #[test]
-    fn test_initialize_and_incremenet_account(){
+    fn test_initialize_and_incremenet_account() {
         let keypair_path = "/home/gidon/.config/solana/id.json".to_string();
         let payer = common::get_key_pair_from_local_json(&keypair_path).unwrap();
 

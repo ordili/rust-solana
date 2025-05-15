@@ -1,5 +1,5 @@
 use solana_sdk::account_info::{AccountInfo, next_account_info};
-use solana_sdk::entrypoint::{ProgramResult, entrypoint};
+use solana_sdk::entrypoint::ProgramResult;
 use solana_sdk::program_error::ProgramError;
 
 ///Your Solana Program can transfer lamports from one account to another without 'invoking' the System program.

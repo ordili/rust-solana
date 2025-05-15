@@ -1,8 +1,8 @@
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
-    compute_budget, signature::Keypair, signer::Signer,
-    system_instruction::transfer, transaction::Transaction,
+    compute_budget, signature::Keypair, signer::Signer, system_instruction::transfer,
+    transaction::Transaction,
 };
 use spl_memo::build_memo;
 
@@ -71,7 +71,7 @@ mod test {
     use super::*;
     use crate::common;
     use solana_sdk::native_token::LAMPORTS_PER_SOL;
-    
+
     #[actix_rt::test]
     async fn test_sol_transfer() -> anyhow::Result<()> {
         let client = crate::common::get_rpc_client();
