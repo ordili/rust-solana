@@ -20,7 +20,7 @@ async fn crate_token_account() -> Result<()> {
 
     // Generate a new keypair for the fee payer
     let fee_payer = Keypair::new();
-    common::airdrop(&client, &fee_payer, 1_000_000_000);
+    common::airdrop(&client, &fee_payer, 1_000_000_000).await?;
     // Generate keypair to use as address of mint
     let mint = Keypair::new();
 
