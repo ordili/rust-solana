@@ -116,7 +116,9 @@ fn initialize_counter(program: &Program<Rc<Keypair>>, counter: &Keypair) -> anyh
 #[cfg(test)]
 mod test {
     use crate::common;
-
+    use anchor_client::Client;
+    use anchor_client::Cluster;
+    use solana_sdk::commitment_config::CommitmentConfig;
     use super::*;
 
     #[test]

@@ -19,7 +19,7 @@ use spl_token_2022::{
 use spl_token_client::{
     client::{ProgramRpcClient, ProgramRpcClientSendTransaction},
     spl_token_2022::id as token_2022_program_id,
-    token::{self, ExtensionInitializationParams, Token},
+    token::{ExtensionInitializationParams, Token},
 };
 use spl_token_confidential_transfer_proof_extraction::instruction::{ProofData, ProofLocation};
 use std::sync::Arc;
