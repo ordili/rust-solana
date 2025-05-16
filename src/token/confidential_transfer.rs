@@ -298,7 +298,7 @@ pub mod test {
 
     use super::*;
 
-    #[actix_rt::test]
+    #[tokio::test]
     pub async fn test_create_confidential_mint() -> Result<()> {
         let clent = common::get_rpc_client();
         let authority = Arc::new(load_keypair()?);
@@ -307,7 +307,7 @@ pub mod test {
         Ok(())
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     pub async fn test_create_confidential_token_account() -> Result<()> {
         let client = Arc::new(common::get_rpc_client());
         let authority = Arc::new(load_keypair()?);

@@ -72,7 +72,7 @@ mod test {
     use crate::common;
     use solana_sdk::native_token::LAMPORTS_PER_SOL;
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_sol_transfer() -> anyhow::Result<()> {
         let client = crate::common::get_rpc_client();
         let keypair_path = "/home/gidon/.config/solana/id.json".to_string();

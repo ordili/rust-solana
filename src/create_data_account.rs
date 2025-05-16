@@ -79,7 +79,7 @@ mod tests {
         println!("{:#?}", account_info);
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_create_account_two() {
         let client = crate::common::get_rpc_client();
         let account = Keypair::new();
