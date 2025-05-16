@@ -61,16 +61,15 @@ async fn crate_token_account(
 mod tests {
     use super::*;
     use crate::common;
+    use crate::token::comm;
     use std::str::FromStr;
-
-    const MINT_PUBKEY: &str = "6R2DtucAYsCnJDjgxPaqSieXqZ6jtyMuNmSPDZFwqjeL";
 
     #[tokio::test]
     async fn test_crate_token_account_for_other_wallet() -> Result<()> {
         let client = common::get_rpc_client();
         let payer = common::get_local_key_pair().unwrap();
         let owner = Keypair::new();
-        let mint: Pubkey = Pubkey::from_str(MINT_PUBKEY).unwrap();
+        let mint: Pubkey = Pubkey::from_str(comm::MINT_PUBKEY).unwrap();
         let token_account: Keypair = Keypair::new();
 
         println!("mint account : {:?}", &mint);
@@ -88,7 +87,7 @@ mod tests {
     async fn test_crate_token_account_for_myself() -> Result<()> {
         let client = common::get_rpc_client();
         let payer = common::get_local_key_pair().unwrap();
-        let mint: Pubkey = Pubkey::from_str(MINT_PUBKEY).unwrap();
+        let mint: Pubkey = Pubkey::from_str(comm::MINT_PUBKEY).unwrap();
         let token_account: Keypair = Keypair::new();
 
         println!("mint account : {:?}", &mint);

@@ -23,6 +23,10 @@ pub mod token {
     pub mod create_token_account;
     pub mod mint_token;
     pub mod token_transfer;
+
+    pub mod token_op;
+
+    pub mod comm;
 }
 
 #[allow(dead_code)]

@@ -51,16 +51,15 @@ async fn mint_token(
 mod tests {
     use super::*;
     use crate::common;
+    use crate::token::comm;
 
-    const MINT_PUBKEY: &str = "6R2DtucAYsCnJDjgxPaqSieXqZ6jtyMuNmSPDZFwqjeL";
-    const TOKEN_ACCOUNT: &str = "EcyHCWEfN5Tp6SMTCsYKY2VeSdyKdr25jTQV5ThDUNEY";
     #[tokio::test]
     async fn test_mint_token() -> Result<()> {
         let client = common::get_rpc_client();
-        let mint_pubkey = Pubkey::from_str_const(MINT_PUBKEY);
+        let mint_pubkey = Pubkey::from_str_const(comm::MINT_PUBKEY);
         let mint_authority = common::get_local_key_pair().unwrap();
 
-        let account_pubkey = Pubkey::from_str_const(TOKEN_ACCOUNT);
+        let account_pubkey = Pubkey::from_str_const(comm::SOURCE_ATA_PUBKEY);
         let amount = 1000;
         mint_token(
             &client,
