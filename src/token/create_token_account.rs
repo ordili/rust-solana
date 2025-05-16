@@ -38,7 +38,7 @@ async fn crate_token_account(
         &token_2022_program_id(),
         &token_account.pubkey(), // account
         mint_address,            // mint
-        owner_pubkey,         // owner
+        owner_pubkey,            // owner
     )?;
 
     let recent_blockhash = client.get_latest_blockhash().await?;
@@ -77,12 +77,16 @@ mod tests {
         println!("token account : {:?}", &token_account.pubkey());
         println!("owner account : {:?}", &owner.pubkey());
         println!("payer account : {:?}", &payer.pubkey());
-    
+
         let before_balance = client.get_balance(&payer.pubkey()).await?;
-        let sig = crate_token_account(&client, &payer, &owner.pubkey(), &token_account, &mint).await?;
+        let sig =
+            crate_token_account(&client, &payer, &owner.pubkey(), &token_account, &mint).await?;
         let after_balance = client.get_balance(&payer.pubkey()).await?;
         println!("create token account sig : {:?}", &sig);
-        println!("create token using lamports : {:?}", (before_balance - after_balance));
+        println!(
+            "create token using lamports : {:?}",
+            (before_balance - after_balance)
+        );
         Ok(())
     }
 
@@ -97,8 +101,9 @@ mod tests {
         println!("token account : {:?}", &token_account.pubkey());
         println!("owner account : {:?}", &payer.pubkey());
         println!("payer account : {:?}", &payer.pubkey());
-        
-        let sig = crate_token_account(&client, &payer, &payer.pubkey(), &token_account, &mint).await?;
+
+        let sig =
+            crate_token_account(&client, &payer, &payer.pubkey(), &token_account, &mint).await?;
         println!("create token account sig : {:?}", &sig);
         Ok(())
     }

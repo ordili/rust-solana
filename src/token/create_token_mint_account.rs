@@ -59,7 +59,7 @@ mod tests {
         let client = common::get_rpc_client();
         let fee_payer = common::get_local_key_pair().unwrap();
         let mint = Keypair::new();
-        let account_info = create_mint_account(&client,&fee_payer,&mint).await?;
+        let account_info = create_mint_account(&client, &fee_payer, &mint).await?;
         println!("{:#?}", account_info);
         Ok(())
     }
