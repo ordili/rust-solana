@@ -14,7 +14,7 @@ use spl_token_2022::{
 async fn crate_token_account(
     client: &RpcClient,
     payer: &Keypair,
-    owner: &Keypair,
+    owner_pubkey: &Pubkey,
     token_account: &Keypair,
     mint_address: &Pubkey,
 ) -> Result<Signature> {
@@ -26,7 +26,7 @@ async fn crate_token_account(
 
     // Instruction to create new account for token account (token 2022 program)
     let create_token_account_instruction = create_account(
-        &owner.pubkey(),            // payer
+        &payer.pubkey(),            // payer
         &token_account.pubkey(),    // new account (token account)
         token_account_rent,         // lamports
         token_account_space as u64, // space
@@ -38,7 +38,7 @@ async fn crate_token_account(
         &token_2022_program_id(),
         &token_account.pubkey(), // account
         mint_address,            // mint
-        &owner.pubkey(),         // owner
+        owner_pubkey,         // owner
     )?;
 
     let recent_blockhash = client.get_latest_blockhash().await?;
@@ -66,7 +66,7 @@ mod tests {
     const MINT_PUBKEY: &str = "6R2DtucAYsCnJDjgxPaqSieXqZ6jtyMuNmSPDZFwqjeL";
 
     #[tokio::test]
-    async fn test_crate_token_account() -> Result<()> {
+    async fn test_crate_token_account_for_other_wallet() -> Result<()> {
         let client = common::get_rpc_client();
         let payer = common::get_local_key_pair().unwrap();
         let owner = Keypair::new();
@@ -76,8 +76,26 @@ mod tests {
         println!("mint account : {:?}", &mint);
         println!("token account : {:?}", &token_account.pubkey());
         println!("owner account : {:?}", &owner.pubkey());
+        println!("payer account : {:?}", &payer.pubkey());
 
-        let sig = crate_token_account(&client, &payer, &payer, &token_account, &mint).await?;
+        let sig = crate_token_account(&client, &payer, &owner.pubkey(), &token_account, &mint).await?;
+        println!("create token account sig : {:?}", &sig);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_crate_token_account_for_myself() -> Result<()> {
+        let client = common::get_rpc_client();
+        let payer = common::get_local_key_pair().unwrap();
+        let mint: Pubkey = Pubkey::from_str(MINT_PUBKEY).unwrap();
+        let token_account: Keypair = Keypair::new();
+
+        println!("mint account : {:?}", &mint);
+        println!("token account : {:?}", &token_account.pubkey());
+        println!("owner account : {:?}", &payer.pubkey());
+        println!("payer account : {:?}", &payer.pubkey());
+
+        let sig = crate_token_account(&client, &payer, &payer.pubkey(), &token_account, &mint).await?;
         println!("create token account sig : {:?}", &sig);
         Ok(())
     }
