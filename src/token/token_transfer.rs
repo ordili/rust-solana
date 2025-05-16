@@ -60,16 +60,15 @@ mod tests {
     #[tokio::test]
     async fn test_token_transfer() -> Result<()> {
         let client = common::get_rpc_client();
-
         let authority = common::get_local_key_pair().unwrap();
         let mint_pubkey = Pubkey::from_str_const(comm::MINT_PUBKEY);
-
         let source_ata = Pubkey::from_str_const(comm::SOURCE_ATA_PUBKEY);
         let dest_ata = Pubkey::from_str_const(comm::DEST_ATA_PUBKEY);
 
         let before_token = client.get_token_account_balance(&dest_ata).await?;
         println!("before_token {:?}", before_token);
         let transfer_amount = 1;
+
         token_transfer(
             &client,
             &authority,

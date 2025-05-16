@@ -71,12 +71,12 @@ pub async fn create_data_account(client: &RpcClient, mint: &Keypair) -> Result<(
 mod tests {
     use super::*;
     use crate::common;
-    #[test]
-    fn test_create_account_one() {
+    #[tokio::test]
+    async fn test_create_account_one() -> Result<()> {
         let client = common::get_rpc_client();
         let account = Keypair::new();
-        let account_info = tokio_test::block_on(create_data_account(&client, &account)).unwrap();
-        println!("{:#?}", account_info);
+        create_data_account(&client, &account).await?;
+        Ok(())
     }
 
     #[tokio::test]

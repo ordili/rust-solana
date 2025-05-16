@@ -30,9 +30,6 @@ pub mod token {
 }
 
 #[allow(dead_code)]
-pub mod lite_svm;
-
-#[allow(dead_code)]
 pub mod bin_code_demo;
 
 #[allow(dead_code)]
