@@ -78,15 +78,9 @@ mod tests {
         println!("owner account : {:?}", &owner.pubkey());
         println!("payer account : {:?}", &payer.pubkey());
 
-        let before_balance = client.get_balance(&payer.pubkey()).await?;
         let sig =
             crate_token_account(&client, &payer, &owner.pubkey(), &token_account, &mint).await?;
-        let after_balance = client.get_balance(&payer.pubkey()).await?;
         println!("create token account sig : {:?}", &sig);
-        println!(
-            "create token using lamports : {:?}",
-            (before_balance - after_balance)
-        );
         Ok(())
     }
 

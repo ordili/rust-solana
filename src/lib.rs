@@ -19,8 +19,8 @@ pub mod create_data_account;
 #[allow(dead_code)]
 pub mod token {
     pub mod confidential_transfer;
+    pub mod create_mint_account;
     pub mod create_token_account;
-    pub mod create_token_mint_account;
     pub mod mint_token;
     pub mod token_transfer;
 }

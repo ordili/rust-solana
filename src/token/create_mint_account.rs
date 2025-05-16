@@ -1,6 +1,7 @@
 use crate::common;
 use anyhow::Result;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     program_pack::Pack,
     signature::{Keypair, Signer},
@@ -13,6 +14,7 @@ async fn create_mint_account(
     client: &RpcClient,
     fee_payer: &Keypair,
     mint: &Keypair,
+    authority_pubkey: &Pubkey,
 ) -> Result<()> {
     let recent_blockhash = client.get_latest_blockhash().await?;
     let space = Mint::LEN;
@@ -29,10 +31,10 @@ async fn create_mint_account(
     // Initialize mint instruction
     let initialize_mint_instruction = initialize_mint(
         &token_2022_program_id(),
-        &mint.pubkey(),            // mint address
-        &fee_payer.pubkey(),       // mint authority
-        Some(&fee_payer.pubkey()), // freeze authority
-        9,                         // decimals
+        &mint.pubkey(),          // mint address
+        authority_pubkey,        // mint authority
+        Some(&authority_pubkey), // freeze authority
+        9,                       // decimals
     )?;
 
     // Create transaction and add instructions
@@ -47,6 +49,7 @@ async fn create_mint_account(
     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
 
     println!("Mint Address: {}", mint.pubkey());
+    println!("Authority Address: {}", authority_pubkey);
     println!("Mint Transaction Signature: {}", transaction_signature);
 
     Ok(())
@@ -59,8 +62,7 @@ mod tests {
         let client = common::get_rpc_client();
         let fee_payer = common::get_local_key_pair().unwrap();
         let mint = Keypair::new();
-        let account_info = create_mint_account(&client, &fee_payer, &mint).await?;
-        println!("{:#?}", account_info);
+        let _x = create_mint_account(&client, &fee_payer, &mint, &fee_payer.pubkey()).await?;
         Ok(())
     }
 }
