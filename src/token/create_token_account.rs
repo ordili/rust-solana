@@ -8,9 +8,7 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use spl_token_2022::{
-    id as token_2022_program_id,
-    instruction::initialize_account,
-    state::Account,
+    id as token_2022_program_id, instruction::initialize_account, state::Account,
 };
 
 async fn crate_token_account(
@@ -20,7 +18,6 @@ async fn crate_token_account(
     token_account: &Keypair,
     mint_address: &Pubkey,
 ) -> Result<Signature> {
-
     // Get token account size (in bytes)
     let token_account_space = Account::LEN;
     let token_account_rent = client
@@ -40,7 +37,7 @@ async fn crate_token_account(
     let initialize_token_account_instruction = initialize_account(
         &token_2022_program_id(),
         &token_account.pubkey(), // account
-        mint_address,    // mint
+        mint_address,            // mint
         &owner.pubkey(),         // owner
     )?;
 
@@ -57,18 +54,18 @@ async fn crate_token_account(
         recent_blockhash,
     );
 
-     let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
-     Ok(transaction_signature)
+    let transaction_signature = client.send_and_confirm_transaction(&transaction).await?;
+    Ok(transaction_signature)
 }
 
 mod tests {
-    use std::str::FromStr;
-    use crate::common;
     use super::*;
+    use crate::common;
+    use std::str::FromStr;
 
-    const  MINT_PUBKEY: &str = "6R2DtucAYsCnJDjgxPaqSieXqZ6jtyMuNmSPDZFwqjeL";
+    const MINT_PUBKEY: &str = "6R2DtucAYsCnJDjgxPaqSieXqZ6jtyMuNmSPDZFwqjeL";
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_crate_token_account() -> Result<()> {
         let client = common::get_rpc_client();
         let payer = common::get_local_key_pair().unwrap();
@@ -79,8 +76,8 @@ mod tests {
         println!("mint account : {:?}", &mint);
         println!("token account : {:?}", &token_account.pubkey());
         println!("owner account : {:?}", &owner.pubkey());
-        
-        let sig = crate_token_account(&client, &payer, &payer,&token_account, &mint).await?;
+
+        let sig = crate_token_account(&client, &payer, &payer, &token_account, &mint).await?;
         println!("create token account sig : {:?}", &sig);
         Ok(())
     }

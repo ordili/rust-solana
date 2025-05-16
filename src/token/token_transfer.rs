@@ -267,7 +267,8 @@ mod tests {
     use solana_sdk::{native_token::LAMPORTS_PER_SOL, program_option::COption};
     use spl_token_2022::state::Account;
     use spl_token_2022::state::AccountState;
-    #[actix_rt::test]
+
+    #[tokio::test]
     async fn test_create_mint_account() -> Result<()> {
         let client = common::get_rpc_client();
         let authority = Keypair::new(); //common::get_local_key_pair().unwrap();
@@ -318,7 +319,7 @@ mod tests {
         Ok(())
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_create_ata() -> Result<()> {
         let client = common::get_rpc_client();
         let authority = common::get_local_key_pair().unwrap();
@@ -350,7 +351,7 @@ mod tests {
         Ok(())
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_mint_to_ata() -> Result<()> {
         let client = common::get_rpc_client();
         let authority = common::get_local_key_pair().unwrap();
@@ -374,7 +375,7 @@ mod tests {
         Ok(())
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_token_transfer() -> Result<()> {
         let client = common::get_rpc_client();
 
@@ -434,7 +435,7 @@ mod tests {
         Ok(())
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_only_create_account() -> Result<()> {
         let client = common::get_rpc_client();
         let authority = common::get_local_key_pair().unwrap();
@@ -446,7 +447,7 @@ mod tests {
         Ok(())
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_init_mint() -> Result<()> {
         let client = common::get_rpc_client();
         let authority = common::get_local_key_pair().unwrap();
