@@ -1,7 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use std::collections::BTreeMap;
 
-#[derive(BorshDeserialize, BorshSerialize, Debug)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, PartialEq, Eq)]
 struct Primitive(
     u8,
     u16,
@@ -14,7 +14,8 @@ struct Primitive(
 
 mod test {
     use crate::serialize::Primitive;
-    use borsh::BorshDeserialize;
+    use borsh::{BorshDeserialize, BorshSerialize};
+    use std::collections::BTreeMap;
 
     #[test]
     fn test_primitive() {
@@ -27,6 +28,24 @@ mod test {
 
         let pri = Primitive::try_from_slice(&prim).unwrap();
         assert_eq!(255, pri.0);
-        println!("{:?}", pri);
+    }
+    #[test]
+    fn test_serialize() {
+        let mut map = BTreeMap::new();
+        map.insert(String::from("test"), String::from("value"));
+        let primitive = Primitive {
+            0: 255,
+            1: 65535,
+            2: 4294967295,
+            3: "hello".to_string(),
+            4: "world".to_string(),
+            5: [1, 2, 3, 4, 5],
+            6: map,
+        };
+        let mut buffer: Vec<u8> = Vec::new();
+        primitive.serialize(&mut buffer).unwrap();
+        let origin_primitive = Primitive::try_from_slice(&buffer).unwrap();
+
+        assert_eq!(origin_primitive, primitive);
     }
 }
