@@ -21,4 +21,5 @@ spl-token-confidential-transfer-proof-extraction = "0.3.0"
 spl-token-confidential-transfer-proof-generation = "0.4.0"
 anchor-client = "0.31.1"
 anchor-lang = "0.31.1"
+solana-account-decoder = "2.2.7"
 

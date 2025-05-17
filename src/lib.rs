@@ -36,3 +36,5 @@ pub mod bin_code_demo;
 pub mod client {
     pub mod program_client;
 }
+
+pub mod serialize;
